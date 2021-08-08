@@ -32,10 +32,10 @@ client.on('messageReactionRemove', (reaction, user) => {
   const member = reaction.message.guild.members.cache.get(user.id);
   if (reaction.message.id === '874040719495544862') {
     switch (name) {
-      case '🍎':
+      case '1️⃣':
         member.roles.remove('873489388338810921');
         break;
-      case '🍌':
+      case '2️⃣':
         member.roles.remove('873489468466823218');
         break;
     }
