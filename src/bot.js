@@ -15,6 +15,8 @@ client.on('ready', () => {
 client.on('messageReactionAdd', (reaction, user) => {
   const { name } = reaction.emoji;
   const member = reaction.message.guild.members.cache.get(user.id);
+  console.log(user.id);
+  console.log(reaction.message.id);
   if (reaction.message.id === '874040719495544862') {
     switch (name) {
       case '1️⃣':
