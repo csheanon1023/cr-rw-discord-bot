@@ -15,15 +15,16 @@ client.on('ready', () => {
 client.on('messageReactionAdd', (reaction, user) => {
   const { name } = reaction.emoji;
   const member = reaction.message.guild.members.cache.get(user.id);
-  console.log(user.id);
-  console.log(reaction.message.id);
+  console.log(`${user.username} reacted with ${name}`);
   if (reaction.message.id === '874040719495544862') {
     switch (name) {
       case '1️⃣':
         member.roles.add('873489388338810921');
+        console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === '873489388338810921').name}`);
         break;
       case '2️⃣':
         member.roles.add('873489468466823218');
+        console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === '873489468466823218').name}`);
         break;
     }
   }
