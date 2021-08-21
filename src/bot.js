@@ -49,4 +49,3 @@ client.on('messageReactionRemove', (reaction, user) => {
 });
 
 client.login(process.env.DISCORDJS_BOT_TOKEN);
-//test project
