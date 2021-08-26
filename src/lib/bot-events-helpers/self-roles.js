@@ -29,7 +29,7 @@ exports.handleRoleAdd = (client, messageId, roleIds) => {
 }
 
 exports.handleRoleRemove = (client, messageId, roleIds) => {
-  client.on('messageReactionAdd', (reaction, user) => {
+  client.on('messageReactionRemove', (reaction, user) => {
     const { name } = reaction.emoji;
     const member = reaction.message.guild.members.cache.get(user.id);
     console.log(`${user.username} reacted with ${name}`);
