@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-exports.getMembers = (clanTag) => {
+exports.getMembers = async (clanTag) => {
   if(!clanTag)
     return;
   const options = {
@@ -13,4 +13,10 @@ exports.getMembers = (clanTag) => {
 
   //Make the API call
   return axios.request(options);
+}
+
+exports.getMembersByLevel = (members, level) => {
+  if(level > 0 && level <= 13)
+    return members.filter(member => member.expLevel == level)
+  return;
 }

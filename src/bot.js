@@ -1,6 +1,7 @@
 require("dotenv").config();
 const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
+const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers')
 const membersDataHelper = require('./lib/clash-royale-api-helpers/members-data-helper');
 
 const client = new Client({
@@ -11,10 +12,25 @@ const client = new Client({
 const PREFIX = "$";
 const SELF_ROLE_MESSAGE_ID = '874040719495544862';
 const SELF_ROLE_CLAN_ROLE_IDS = [ '873489388338810921', '873489468466823218' ];
+const COLEADER_ROLE_ID = '814834289613996082';
+const LEADER_ROLE_ID = '815152089201246244';
 
 //Event Handlers
 client.on('ready', () => {
   console.log(`${client.user.tag} has logged in.`);
+});
+
+client.on('message', async (message) => {
+  if (message.author.bot) return;
+  if (message.content.startsWith(PREFIX)) {
+    const [CMD_NAME, ...args] = message.content
+      .trim()
+      .substring(PREFIX.length)
+      .split(/\s+/);
+    if (CMD_NAME === 'bylevel') {
+      warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID]);
+    }
+  }
 });
 
 selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
