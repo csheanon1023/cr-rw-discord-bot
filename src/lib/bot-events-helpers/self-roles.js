@@ -8,7 +8,7 @@ exports.handleRoleAdd = (client, messageId, roleIds) => {
         case '1️⃣':
           member.roles.add(roleIds[0])
             .then(({ user }) => {
-              console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name}`);
+              console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name} to ${user.username}`);
             })
             .catch(() => {
               console.log(`Failed to add clan 1 role to ${user.username}`);
@@ -17,7 +17,7 @@ exports.handleRoleAdd = (client, messageId, roleIds) => {
         case '2️⃣':
           member.roles.add(roleIds[1])
             .then(({ user }) => {
-              console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name}`);
+              console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} from ${user.username}`);
             })
             .catch(() => {
               console.log(`Failed to add clan 2 role to ${user.username}`);
