@@ -17,7 +17,7 @@ exports.handleRoleAdd = (client, messageId, roleIds) => {
         case '2️⃣':
           member.roles.add(roleIds[1])
             .then(({ user }) => {
-              console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} from ${user.username}`);
+              console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} to ${user.username}`);
             })
             .catch(() => {
               console.log(`Failed to add clan 2 role to ${user.username}`);
@@ -32,13 +32,13 @@ exports.handleRoleRemove = (client, messageId, roleIds) => {
   client.on('messageReactionRemove', (reaction, user) => {
     const { name } = reaction.emoji;
     const member = reaction.message.guild.members.cache.get(user.id);
-    console.log(`${user.username} reacted with ${name}`);
+    console.log(`${user.username} removed reaction ${name}`);
     if (reaction.message.id === messageId) {
       switch (name) {
         case '1️⃣':
           member.roles.remove(roleIds[0])
             .then(({ user }) => {
-              console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name}`);
+              console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name} from ${user.username} `);
             })
             .catch(() => {
               console.log(`Failed to remove clan 1 role from ${user.username}`);
@@ -47,7 +47,7 @@ exports.handleRoleRemove = (client, messageId, roleIds) => {
         case '2️⃣':
           member.roles.remove(roleIds[1])
             .then(({ user }) => {
-              console.log(`${user.username} was given the role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name}`);
+              console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} from ${user.username}`);
             })
             .catch(() => {
               console.log(`Failed to remove clan 2 role from ${user.username}`);
