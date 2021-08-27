@@ -29,6 +29,7 @@ client.on('message', async (message) => {
       .split(/\s+/);
     if (CMD_NAME === 'bylevel') {
       warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID]);
+      return;
     }
   }
 });

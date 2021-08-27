@@ -5,7 +5,7 @@ exports.getMembers = async (clanTag) => {
     return;
   const options = {
     method: 'GET',
-    url: `https://proxy.royaleapi.dev/v1/clans/%23${clanTag}/members`,
+    url: `https://proxy.royaleapi.dev/v1/clans/%23${clanTag.substring(1)}/members`,
     headers: {
       Authorization: `Bearer ${process.env.CLASH_ROYALE_API_TOKEN}`
     }
