@@ -14,6 +14,7 @@ const SELF_ROLE_MESSAGE_ID = '874040719495544862';
 const SELF_ROLE_CLAN_ROLE_IDS = [ '873489388338810921', '873489468466823218' ];
 const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
+const TEST_ROLE_ID = '880484404424753233';
 
 //Event Handlers
 client.on('ready', () => {
@@ -28,7 +29,7 @@ client.on('message', async (message) => {
       .substring(PREFIX.length)
       .split(/\s+/);
     if (CMD_NAME === 'bylevel') {
-      warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID]);
+      warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
       return;
     }
   }
