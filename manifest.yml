@@ -1,4 +1,4 @@
 apps:
-- name: GetStartedNode
+- name: cr-bot-prod
   random-route: true
   memory: 128M
