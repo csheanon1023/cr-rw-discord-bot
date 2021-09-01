@@ -3,7 +3,7 @@ const membersDataHelper = require('../clash-royale-api-helpers/members-data-help
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
 
-exports.startInOutLogCronEachMinute = (database, client) => {
+exports.startInOutLogCronEachMinute = (database, client, channelList) => {
   let clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
   let clanMembersCache = [];
   let lastInOutCronSuccessTimestamp = -1;
@@ -121,8 +121,14 @@ exports.startInOutLogCronEachMinute = (database, client) => {
       return;
     const response = await playerDataHelper.getPlayerData(playerTag);
     const playerDetails = response.data;
-    const channel = await client.channels.fetch('870792677472489515');
-    channel.send(`This player has ${change}: ${playerDetails.name} [${clan}]`);
-    console.log(`This player has ${change}: ${playerDetails.name} [${clan}]`);
+    if(channelList == null || channelList.length == 0) {
+      console.log('No channels defined for in-out log');
+      return;
+    }
+    channelList.forEach(async channelId =>{
+      const channel = await client.channels.fetch(channelId);
+      channel.send(` [${clan}] This player has ${change}: ${playerDetails.name}.`);
+    })
+    console.log(`[${clan}] This player has ${change}: ${playerDetails.name}.`);
   }
 }

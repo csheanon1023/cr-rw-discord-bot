@@ -20,6 +20,8 @@ const SELF_ROLE_CLAN_ROLE_IDS = [ '873489388338810921', '873489468466823218' ];
 const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
+const TEST_CHANNEL_ID = '870792677472489515'; //Add this to the array for testing
+const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
 
 //Event Handlers
 client.on('ready', () => {
@@ -47,4 +49,4 @@ selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS
 client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 //Start CRON Jobs
-inOutCronJob.startInOutLogCronEachMinute(database, client);
+inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
