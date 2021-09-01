@@ -2,8 +2,13 @@ require("dotenv").config();
 const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers')
-const membersDataHelper = require('./lib/clash-royale-api-helpers/members-data-helper');
+const databaseRepository = require('./lib/database-helpers/database-repository');
+const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 
+//Database connection
+const database = databaseRepository.connectRealtimeDatabase();
+
+//Init discord client
 const client = new Client({
   partials: ['MESSAGE', 'REACTION']
 });
@@ -15,6 +20,8 @@ const SELF_ROLE_CLAN_ROLE_IDS = [ '873489388338810921', '873489468466823218' ];
 const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
+const TEST_CHANNEL_ID = '870792677472489515'; //Add this to the array for testing
+const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
 
 //Event Handlers
 client.on('ready', () => {
@@ -40,3 +47,6 @@ selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS
 
 //Bot login
 client.login(process.env.DISCORDJS_BOT_TOKEN);
+
+//Start CRON Jobs
+inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);

@@ -1,0 +1,1 @@
+module.exports.firebaseConfig = JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG);
