@@ -2,8 +2,13 @@ require("dotenv").config();
 const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers')
-const membersDataHelper = require('./lib/clash-royale-api-helpers/members-data-helper');
+const databaseRepository = require('./lib/database-helpers/database-repository');
+const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 
+//Database connection
+const database = databaseRepository.connectRealtimeDatabase();
+
+//Init discord client
 const client = new Client({
   partials: ['MESSAGE', 'REACTION']
 });
@@ -40,3 +45,6 @@ selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS
 
 //Bot login
 client.login(process.env.DISCORDJS_BOT_TOKEN);
+
+//Start CRON Jobs
+inOutCronJob.startInOutLogCronEachMinute(database, client);
