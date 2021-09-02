@@ -11,8 +11,8 @@ To use this code, follow the instructions:
 3) Create three environment variables:
     - **DISCORDJS_BOT_TOKEN** - Your Bot Token `Required` https://discordjs.guide/preparations/setting-up-a-bot-application.html
     - **CLASH_ROYALE_API_TOKEN** - Your CR API token `Required` https://developer.clashroyale.com/#/getting-started
-    - **WEBHOOK_ID** - For webhooks, not required unless you want to use the webhook command
-    - **WEBHOOK_TOKEN** - The token for your webhook client.
+    - **FIREBASE_DATABASE_URL** - Firebase realtine database URL `Required`
+    - **FIREBASE_ADMIN_SDK_CONFIG** - Firebase admin service account config (minified) `Required` https://firebase.google.com/docs/admin/setup#initialize-sdk
 
 4) Run `npm run start` or `npm run dev` in the project directory
 
