@@ -1,4 +1,5 @@
 // ONLY TO BE USED WHEN NEW CLAN IS ADDED (uncomment only the sections that you need)
+// to run script: node -r dotenv/config ./src/lib/database-helpers/scripts/reset-current-members-list.js
 
 //SECTION helper functions (safe to uncomment)
 /*
