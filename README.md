@@ -14,7 +14,9 @@ To use this code, follow the instructions:
     - **FIREBASE_DATABASE_URL** - Firebase realtine database URL `Required`
     - **FIREBASE_ADMIN_SDK_CONFIG** - Firebase admin service account config (minified) `Required` https://firebase.google.com/docs/admin/setup#initialize-sdk
 
-4) Run `npm run start` or `npm run dev` in the project directory
+4) Initialize data into your realtime database instance using this script `/src/lib/database-helpers/scripts/initialize-database.js`
+
+5) Run `npm run start` or `npm run dev` in the project directory
 
 # Notes
 
