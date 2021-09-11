@@ -89,7 +89,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
         for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
           //TODO add validation to make sure data is fresh
           if(key == 'timestamp')
-            continue;
+            return;
           const clanCurrentRiverRaceData = currentRiverRaceData.find(({ data }) => data.clan.tag == clanPreviousRiverRaceData.clan.tag);
           //TODO check if return is needed
           if(clanCurrentRiverRaceData == undefined) {
@@ -101,7 +101,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
             const currentParticipantData = clanCurrentRiverRaceData.data?.clan?.participants.find(player => player.tag == participant.tag);
             if(currentParticipantData == undefined) {
               console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
-              continue;
+              return;
             }
             const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed - currentParticipantData.decksUsedToday;
             const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
@@ -127,6 +127,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
         return;
       }
     }
+
     else if(previousRiverRacePeriodIndex == 6){
       try {
         const currentRiverRaceDataPromises = clanListCache.map(clan => riverRaceLogDataHelper.getRiverRaceLogData(clan));
@@ -144,7 +145,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
         for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
           //TODO add validation to make sure data is fresh
           if(key == 'timestamp')
-            continue;
+            return;
           //TODO this will fail if 2 of our clans are paired up (very unlikely to happen but, possible)
           const clanRiverRaceLogData = mostRecentEntryInRiverRaceLogs.find(clanMostRecentEntryInRiverRaceLog => clanMostRecentEntryInRiverRaceLog.participatingClans.includes(clanPreviousRiverRaceData.clan.tag));
           //TODO check if return is needed
@@ -157,12 +158,12 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
             const ourClanStandingData = clanRiverRaceLogData.standings?.find(clanStanding => clanStanding.clan.tag == clanPreviousRiverRaceData.clan.tag);
             if(currentParticipantData == undefined) {
               console.error(`${formattedCurrentTime} Unexpected: not able to find clan in filtered river race logs data: ${clanPreviousRiverRaceData.clan.tag}`);
-              continue;
+              return;
             }
             const currentParticipantData = ourClanStandingData.clan?.participants.find(player => player.tag == participant.tag);
             if(currentParticipantData == undefined) {
               console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
-              continue;
+              return;
             }
             const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed;
             const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
