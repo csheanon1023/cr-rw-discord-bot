@@ -1,5 +1,6 @@
 const databaseRepository = require('../database-helpers/database-repository');
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
+const riverRaceLogDataHelper = require('../clash-royale-api-helpers/river-race-log-data-helper');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
@@ -103,6 +104,67 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
               continue;
             }
             const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed - currentParticipantData.decksUsedToday;
+            const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
+            if(unuesdDecks < 0 || unuesdDecks > 4) {
+              console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}`);
+              return;
+            }
+            if(unuesdDecks != 0) {
+              const reportPlayerData = {
+                tag: participant.tag,
+                name: participant.name,
+                unusedDecks: unuesdDecks
+              };
+              unusedDecksReport.push(reportPlayerData);
+            }
+          });
+        }
+        unusedDecksReport.forEach(member => console.log(member));
+        // databaseRepository.setLastKnownBattleDayData(riverRaceDataSnap, database);
+      } catch(e) {
+        console.error(e);
+        console.log(`${formattedCurrentTime} river race report generation cron failed`);
+        return;
+      }
+    }
+    else if(previousRiverRacePeriodIndex == 6){
+      try {
+        const currentRiverRaceDataPromises = clanListCache.map(clan => riverRaceLogDataHelper.getRiverRaceLogData(clan));
+        const previousRiverRaceDataSnpashotPromises = databaseRepository.getLastKnownBattleDayData(database);
+        const [ previousRiverRaceDataSnpashot, ...currentRiverRaceData ] = await Promise.all([ previousRiverRaceDataSnpashotPromises, ...currentRiverRaceDataPromises]);
+        const mostRecentEntryInRiverRaceLogs = currentRiverRaceData.map(clanCurrentRiverRaceData => ({
+          standings: clanCurrentRiverRaceData.data.items.items[0].standings,
+          createdDate: clanCurrentRiverRaceData.data.items.items[0].createdDate,
+          participatingClans: clanCurrentRiverRaceData.data.items.items[0].standings.map(clanStandings => clanStandings.clan.tag)
+        }));
+        // if(mostRecentEntryInRiverRaceLogs[0].createdDate) {
+        //   //TODO handle this
+        // }
+        const previousRiverRaceDataSnpashotValue = previousRiverRaceDataSnpashot.val();
+        for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
+          //TODO add validation to make sure data is fresh
+          if(key == 'timestamp')
+            continue;
+          //TODO this will fail if 2 of our clans are paired up (very unlikely to happen but, possible)
+          const clanRiverRaceLogData = mostRecentEntryInRiverRaceLogs.find(clanMostRecentEntryInRiverRaceLog => clanMostRecentEntryInRiverRaceLog.participatingClans.includes(clanPreviousRiverRaceData.clan.tag));
+          //TODO check if return is needed
+          if(clanRiverRaceLogData == undefined) {
+            console.log(`${formattedCurrentTime} river race report generation cron failed, not able to match clans in previousSnap and current data returned from the API for ${clanPreviousRiverRaceData.clan.tag}`);
+            return;
+          }
+          let participantList = clanPreviousRiverRaceData?.clan?.participants;
+          participantList.forEach(participant => {
+            const ourClanStandingData = clanRiverRaceLogData.standings?.find(clanStanding => clanStanding.clan.tag == clanPreviousRiverRaceData.clan.tag);
+            if(currentParticipantData == undefined) {
+              console.error(`${formattedCurrentTime} Unexpected: not able to find clan in filtered river race logs data: ${clanPreviousRiverRaceData.clan.tag}`);
+              continue;
+            }
+            const currentParticipantData = ourClanStandingData.clan?.participants.find(player => player.tag == participant.tag);
+            if(currentParticipantData == undefined) {
+              console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
+              continue;
+            }
+            const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed;
             const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
             if(unuesdDecks < 0 || unuesdDecks > 4) {
               console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}`);
