@@ -30,8 +30,8 @@ exports.setLastKnownMembersListData = (data, database) => {
 };
 
 //last-known-battle-day-data
-exports.getLastKnownBattleDayData = (clanTag, database) => {
-  return database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}/${clanTag.substring(1)}`).once('value');
+exports.getLastKnownBattleDayData = (database) => {
+  return database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}`).once('value');
 };
 
 exports.setLastKnownBattleDayData = (data, database) => {
