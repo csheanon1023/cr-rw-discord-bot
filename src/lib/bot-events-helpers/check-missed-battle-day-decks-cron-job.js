@@ -58,8 +58,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
   });
 
   //CRON At each minute between 00-10 of the hours 10:00 on Sun, Mon, Fri, and Sat
-  // cron.schedule('0-5 10 * * 0,1,5,6', async () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('0-5 10 * * 0,1,5,6', async () => {
     const currentDate = new Date();
     const currentDay = currentDate.getDay();
     const previousRiverRacePeriodIndex = (currentDay + 5) % 7;
