@@ -206,4 +206,4 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
   }
 }
 
-this.scheduleCronsTOCollectDataAboutMissedBattleDecks(databaseRepository.connectRealtimeDatabase());
+// this.scheduleCronsTOCollectDataAboutMissedBattleDecks(databaseRepository.connectRealtimeDatabase());
