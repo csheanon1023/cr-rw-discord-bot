@@ -2,7 +2,6 @@ const databaseRepository = require('../database-helpers/database-repository');
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
 const riverRaceLogDataHelper = require('../clash-royale-api-helpers/river-race-log-data-helper');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
-const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
 
 exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, channelList) => {
