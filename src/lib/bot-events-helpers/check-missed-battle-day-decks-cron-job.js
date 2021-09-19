@@ -95,7 +95,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
           }
           data.clan?.participants?.forEach(participant => participant.decksUsed = participant.decksUsed - participant. decksUsedToday);
           endOfDayRiverRaceData.push({
-            participats: data.clan?.participants,
+            participants: data.clan?.participants,
             clanTag: data.clan?.tag
           });
         });
@@ -111,7 +111,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
           // const createdDate = clanMostRecentEntryInRiverRaceLogs.createdDate;
           // TODO some validation
           endOfDayRiverRaceData.push({
-            participats: clanStandings.clan?.participants,
+            participants: clanStandings.clan?.participants,
             clanTag: clanStandings.clan?.tag
           });
         });
@@ -135,16 +135,15 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
           return;
         }
         
-        let participantList = clanPreviousRiverRaceData?.clan?.participants;
         let currentClanMemberList = await membersDataHelper.getMembers(clanPreviousRiverRaceData?.clan?.tag);
-        participantList = participantList.filter(participant => currentClanMemberList.data.items.find(member => member.tag == participant.tag));
+        let participantList = clanPreviousRiverRaceData?.clan?.participants?.filter(participant => currentClanMemberList.data.items.find(member => member.tag == participant.tag));
         participantList.forEach(participant => {
           const currentParticipantData = clanEndOfDayRiverRaceData.participants.find(player => player.tag == participant.tag);
           if(currentParticipantData == undefined) {
             console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
             return;
           }
-          const unuesdDecks = 4 - participant.decksUsedToday + currentParticipantData.decksUsed - participant.decksUsed;
+          const unuesdDecks = 4 - (participant.decksUsedToday + currentParticipantData.decksUsed - participant.decksUsed);
           if(unuesdDecks < 0 || unuesdDecks > 4) {
             console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}, player: ${participant.name}, ID: ${participant.tag}`);
             return;
