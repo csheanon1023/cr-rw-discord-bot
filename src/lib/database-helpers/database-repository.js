@@ -35,11 +35,14 @@ exports.getLastKnownBattleDayData = (database) => {
 };
 
 exports.setLastKnownBattleDayData = (data, database) => {
+  let returnValue = false;
   database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}`).update(data, (error) => {
     if (error) {
       console.log('Data could not be saved.' + error);
     } else {
       console.log('Data saved successfully.');
+      returnValue = true;
     }
   });
+  return returnValue;
 };

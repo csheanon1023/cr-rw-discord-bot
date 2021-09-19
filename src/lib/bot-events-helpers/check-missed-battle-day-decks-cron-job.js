@@ -6,22 +6,28 @@ const cron = require('node-cron');
 
 exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, channelList) => {
   let clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
-  let isRiverRaceDataUpdatedToNextDay = false;
-  let isDailyReportSent = {
-    '#2PYUJUL': false,
-    '#P9QQVJVG': false
-  };
-  let clanNameByKeyCache = {
-    '#2PYUJUL': 'ROYAL WARRIORS!',
-    '#P9QQVJVG': 'HARAMI_CLASHERS'
-  };
-  //TODO setup flags
+  // let clanNameByKeyCache = {
+  //   '#2PYUJUL': 'ROYAL WARRIORS!',
+  //   '#P9QQVJVG': 'HARAMI_CLASHERS'
+  // };
+  // let isRiverRaceDataUpdatedToNextDay = clanListCache.reduce((obj, clanTag) => ({...obj, [clanTag]: false}), {});
+  let isRiverRaceDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({...obj, [clanTag]: false}), {});
+  let isDailyReportSent = clanListCache.reduce((obj, clanTag) => ({...obj, [clanTag]: false}), {});
   
-  //CRON At every 5th minute from 0 through 59 past hour 9 on Sunday, Monday, Friday, and Saturday [offset 6]
-  cron.schedule('6 0-59/5 9 * * 0,1,5,6', async () => {
+  //At every minute from 15 through 20 past hour 12 on Sunday, Thursday, Friday, and Saturday [offset 3]
+  cron.schedule('3 15-20 12 * * 0,4,5,6', async () => {
     const currentDate = new Date();
     const currentDay = currentDate.getDay();
-    const currentRiverRacePeriodIndex = (currentDay + 5) % 7;
+    /**
+     * Relation between periodIndex and date
+     * Time in 24Hr format
+     * Javascript Date object gives day as an integer number, between 0 and 6, 0 for Sunday, 1 for Monday, and so on.
+     * periodIndex field is also an integer but, monday is referenced by 0(periodIndex % 7).
+     * Also, CR War days start at ~10:00AM UTC so in the format "(currentDay + offset) % 7", offset for the same period depends on which day the cron is scheduled.
+     * Consider periodIndex % 7 == 3, this should start at ~10:00 Thursday and end at ~10:00 Friday.
+     * A task at 12:00 Thursday will use offset 6 but, a task at 8:00 Friday will use offset 5.
+     */
+    const currentRiverRacePeriodIndex = (currentDay + 6) % 7;
     const formattedCurrentTime = getCurrentTime(currentDate);
 
     if(clanListCache == null || clanListCache.length == 0) {
@@ -29,21 +35,17 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
       return;
     }
 
-    //TODO handle case when the first cron finds that periodIndex has changed to next period (unlikely now that we're starting at 9:00)
-    //check for this is also done in the other cron so this is anyway not very critical but, do this someday to make it more fault tolerant
-
-    if(isRiverRaceDataUpdatedToNextDay) {
-      console.log(`${formattedCurrentTime} Skipping river race data collection, data has been updated to next day`);
+    if(Object.values(isRiverRaceDataSnapSaved).find(val => val == false) == undefined) {
+      console.log(`${formattedCurrentTime} Skipping river race data collection, data has been updated to next day for all clans`);
       return;
     }
 
     try {
-      const currentRiverRaceDataPromises = clanListCache.map(clan => currentRiverRaceDataHelper.getCurrentRiverRaceData(clan));
-      const currentRiverRaceData = await Promise.all(currentRiverRaceDataPromises);
+      const currentRiverRaceData = await Promise.all(clanListCache.map(clan => currentRiverRaceDataHelper.getCurrentRiverRaceData(clan)));
       currentRiverRaceData.forEach(({ data }) => {
         let clanRiverRaceDataSnap = {};
         if(data?.periodIndex % 7 != currentRiverRacePeriodIndex) {
-          isRiverRaceDataUpdatedToNextDay = true;
+          console.log(`${formattedCurrentTime} Skipping river race data collection for ${data?.clan?.tag}, periodIndex value was unexpected`)
           return;
         }
         clanRiverRaceDataSnap[data?.clan?.tag?.substring(1)] = {
@@ -51,7 +53,8 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
           periodLogs: data.periodLogs,
           timestamp: currentDate.getTime()
         };
-        databaseRepository.setLastKnownBattleDayData(clanRiverRaceDataSnap, database);
+        const isDataSnapSavedSuccessfully = databaseRepository.setLastKnownBattleDayData(clanRiverRaceDataSnap, database);
+        isRiverRaceDataSnapSaved[data?.clan?.tag] = isDataSnapSavedSuccessfully;
       });
     } catch(e) {
       console.error(e);
@@ -60,8 +63,8 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
     }
   });
 
-  //CRON At every minute from 15 through 20 past hour 10 on Sunday, Monday, Friday, and Saturday [offset 3]
-  cron.schedule('3 15-20 10 * * 0,1,5,6', async () => {
+  //CRON At every minute from 15 through 20 past hour 10 on Sunday, Monday, Friday, and Saturday [offset 6]
+  cron.schedule('6 15-20 10 * * 0,1,5,6', async () => {
     const currentDate = new Date();
     const currentDay = currentDate.getDay();
     const previousRiverRacePeriodIndex = (currentDay + 5) % 7;
@@ -77,171 +80,115 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
       console.log(`${formattedCurrentTime} Skipping river race report generation cron, all reports have already been sent`);
       return;
     }
-    
-    if(!isRiverRaceDataUpdatedToNextDay) {
-      console.error(`${formattedCurrentTime} isRiverRaceDataUpdatedToNextDay was not true in psot cron`);
-    }
 
-    if([3, 4, 5].includes(previousRiverRacePeriodIndex)){
-      try {
-        const currentRiverRaceDataPromises = clanListCache.map(clan => currentRiverRaceDataHelper.getCurrentRiverRaceData(clan));
-        const previousRiverRaceDataSnpashotPromises = databaseRepository.getLastKnownBattleDayData(database);
-        const [ previousRiverRaceDataSnpashot, ...currentRiverRaceData ] = await Promise.all([ previousRiverRaceDataSnpashotPromises, ...currentRiverRaceDataPromises]);
-        const previousRiverRaceDataSnpashotValue = previousRiverRaceDataSnpashot.val();
-        for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
-          //TODO add validation to make sure data is fresh
-          if(key == 'timestamp')
-            continue;
-          if(isDailyReportSent[clanPreviousRiverRaceData.clan.tag]) {
-            console.log(`${formattedCurrentTime} River race report for ${clanPreviousRiverRaceData.clan.tag} has already been sent`)
-            continue;
-          }
-          const clanCurrentRiverRaceData = currentRiverRaceData.find(({ data }) => data.clan.tag == clanPreviousRiverRaceData.clan.tag);
-          if(clanCurrentRiverRaceData.data?.periodIndex % 7 == previousRiverRacePeriodIndex) {
-            console.log(`${formattedCurrentTime} Skippng river race report generation as the battle day has not ended yet`)
-            continue;
-          }
-          //TODO check if return is needed
-          if(clanCurrentRiverRaceData == undefined) {
-            console.log(`${formattedCurrentTime} river race report generation cron failed, not able to match clans in previousSnap and current data returned from the API for ${clanPreviousRiverRaceData.clan.tag}`);
+    try {
+      const previousRiverRaceDataSnpashot = await databaseRepository.getLastKnownBattleDayData(database);
+      const previousRiverRaceDataSnpashotValue = previousRiverRaceDataSnpashot.val();
+      const endOfDayRiverRaceData = [];
+
+      if([3, 4, 5].includes(previousRiverRacePeriodIndex)){
+        const currentRiverRaceData = await Promise.all([ ...clanListCache.map(clan => currentRiverRaceDataHelper.getCurrentRiverRaceData(clan)) ]);
+        currentRiverRaceData.forEach(({ data }) => {
+          if(data.periodIndex % 7 == previousRiverRacePeriodIndex) {
+            console.log(`${formattedCurrentTime} River race report generation, current data's period index suggests that war has not ended yet`);
             return;
           }
-          let participantList = clanPreviousRiverRaceData?.clan?.participants;
-          let currentClanMemberList = await membersDataHelper.getMembers(clanPreviousRiverRaceData?.clan?.tag);
-          participantList = participantList.filter(participant => currentClanMemberList.data.items.find(member => member.tag == participant.tag));
-          participantList.forEach(participant => {
-            const currentParticipantData = clanCurrentRiverRaceData.data?.clan?.participants.find(player => player.tag == participant.tag);
-            if(currentParticipantData == undefined) {
-              console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
-              return;
-            }
-            const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed - currentParticipantData.decksUsedToday;
-            const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
-            if(unuesdDecks < 0 || unuesdDecks > 4) {
-              console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}`);
-              return;
-            }
-            if(unuesdDecks != 0) {
-              const reportPlayerData = {
-                tag: participant.tag,
-                name: participant.name,
-                unusedDecks: unuesdDecks
-              };
-              let clanUnusedDecksReport = unusedDecksReport.find(e => e.clanTag == clanCurrentRiverRaceData.data?.clan?.tag)
-              if(clanUnusedDecksReport) {
-                clanUnusedDecksReport.unusedDecksReport.push(reportPlayerData);
-              }
-              else {
-                unusedDecksReport.push({
-                  clanTag: clanCurrentRiverRaceData.data?.clan?.tag,
-                  unusedDecksReport: [reportPlayerData]
-                });
-              }
-            }
+          data.clan?.participants?.forEach(participant => participant.decksUsed = participant.decksUsed - participant. decksUsedToday);
+          endOfDayRiverRaceData.push({
+            participats: data.clan?.participants,
+            clanTag: data.clan?.tag
           });
-        }
-        unusedDecksReport.forEach(clanUnusedDecksReport => {
-          if(Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
-            sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
-            isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
-          }
         });
-      } catch(e) {
-        console.error(e);
-        console.log(`${formattedCurrentTime} river race report generation cron failed`);
-        return;
       }
-    }
+      
+      else if(previousRiverRacePeriodIndex == 6){
+        const currentRiverRaceData = await Promise.all([ ...clanListCache.map(clan => riverRaceLogDataHelper.getRiverRaceLogData(clan)) ]);
+        currentRiverRaceData.forEach(clanCurrentRiverRaceData => {
+          clanMostRecentEntryInRiverRaceLogs = clanCurrentRiverRaceData.data.items.items[0];
+          clanStandings = clanMostRecentEntryInRiverRaceLogs.standings.filter(clanStandings => clanListCache.includes(clanStandings.clan.tag));
+          if(clanStandings.length == 0)
+          return;
+          // const createdDate = clanMostRecentEntryInRiverRaceLogs.createdDate;
+          // TODO some validation
+          endOfDayRiverRaceData.push({
+            participats: clanStandings.clan?.participants,
+            clanTag: clanStandings.clan?.tag
+          });
+        });
+      }
 
-    else if(previousRiverRacePeriodIndex == 6){
-      try {
-        const currentRiverRaceDataPromises = clanListCache.map(clan => riverRaceLogDataHelper.getRiverRaceLogData(clan));
-        const previousRiverRaceDataSnpashotPromises = databaseRepository.getLastKnownBattleDayData(database);
-        const [ previousRiverRaceDataSnpashot, ...currentRiverRaceData ] = await Promise.all([ previousRiverRaceDataSnpashotPromises, ...currentRiverRaceDataPromises]);
-        const mostRecentEntryInRiverRaceLogs = currentRiverRaceData.map(clanCurrentRiverRaceData => ({
-          standings: clanCurrentRiverRaceData.data.items.items[0].standings,
-          createdDate: clanCurrentRiverRaceData.data.items.items[0].createdDate,
-          participatingClans: clanCurrentRiverRaceData.data.items.items[0].standings.map(clanStandings => clanStandings.clan.tag)
-        }));
-        // if(mostRecentEntryInRiverRaceLogs[0].createdDate) {
-        //   //TODO handle this
-        // }
-        const previousRiverRaceDataSnpashotValue = previousRiverRaceDataSnpashot.val();
-        for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
-          //TODO add validation to make sure data is fresh
-          if(key == 'timestamp')
-            continue;
-          if(isDailyReportSent[clanPreviousRiverRaceData.clan.tag]) {
-            console.log(`${formattedCurrentTime} River race report for ${clanPreviousRiverRaceData.clan.tag} has already been sent`)
-            continue;
-          }
-          //TODO this will fail if 2 of our clans are paired up (very unlikely to happen but, possible)
-          const clanRiverRaceLogData = mostRecentEntryInRiverRaceLogs.find(clanMostRecentEntryInRiverRaceLog => clanMostRecentEntryInRiverRaceLog.participatingClans.includes(clanPreviousRiverRaceData.clan.tag));
-          //TODO check if return is needed
-          if(clanRiverRaceLogData == undefined) {
-            console.log(`${formattedCurrentTime} river race report generation cron failed, not able to match clans in previousSnap and current data returned from the API for ${clanPreviousRiverRaceData.clan.tag}`);
+      if(!clanListCache.every(cacheClanTag => endOfDayRiverRaceData.find(({ clanTag }) => clanTag == cacheClanTag))) {
+        console.log(`${formattedCurrentTime} River race report generation, river race log doesn't have data for all clans`);
+      }
+      
+      //Generate Report
+      for (const [key, clanPreviousRiverRaceData] of Object.entries(previousRiverRaceDataSnpashotValue)) {
+        if(isDailyReportSent[clanPreviousRiverRaceData.clan.tag]) {
+          console.log(`${formattedCurrentTime} River race report for ${clanPreviousRiverRaceData.clan.tag} has already been sent`)
+          continue;
+        }
+        const clanEndOfDayRiverRaceData = endOfDayRiverRaceData.find(({ clanTag }) => clanTag == clanPreviousRiverRaceData.clan.tag);
+        
+        //TODO check if return is needed
+        if(clanEndOfDayRiverRaceData == undefined) {
+          console.log(`${formattedCurrentTime} river race report generation cron failed, not able to match clans in previousSnap and current data returned from the API for ${clanPreviousRiverRaceData.clan.tag}`);
+          return;
+        }
+        
+        let participantList = clanPreviousRiverRaceData?.clan?.participants;
+        let currentClanMemberList = await membersDataHelper.getMembers(clanPreviousRiverRaceData?.clan?.tag);
+        participantList = participantList.filter(participant => currentClanMemberList.data.items.find(member => member.tag == participant.tag));
+        participantList.forEach(participant => {
+          const currentParticipantData = clanEndOfDayRiverRaceData.participants.find(player => player.tag == participant.tag);
+          if(currentParticipantData == undefined) {
+            console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
             return;
           }
-          let participantList = clanPreviousRiverRaceData?.clan?.participants;
-          participantList.forEach(participant => {
-            const ourClanStandingData = clanRiverRaceLogData.standings?.find(clanStanding => clanStanding.clan.tag == clanPreviousRiverRaceData.clan.tag);
-            if(currentParticipantData == undefined) {
-              console.error(`${formattedCurrentTime} Unexpected: not able to find clan in filtered river race logs data: ${clanPreviousRiverRaceData.clan.tag}`);
-              return;
+          const unuesdDecks = 4 - participant.decksUsedToday + currentParticipantData.decksUsed - participant.decksUsed;
+          if(unuesdDecks < 0 || unuesdDecks > 4) {
+            console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}, player: ${participant.name}, ID: ${participant.tag}`);
+            return;
+          }
+          if(unuesdDecks != 0) {
+            const reportPlayerData = {
+              tag: participant.tag,
+              name: participant.name,
+              unusedDecks: unuesdDecks
+            };
+            let clanUnusedDecksReport = unusedDecksReport.find(e => e.clanTag == clanEndOfDayRiverRaceData.clanTag)
+            if(clanUnusedDecksReport) {
+              clanUnusedDecksReport.unusedDecksReport.push(reportPlayerData);
             }
-            const currentParticipantData = ourClanStandingData.clan?.participants.find(player => player.tag == participant.tag);
-            if(currentParticipantData == undefined) {
-              console.error(`${formattedCurrentTime} Unexpected: not able to find player in new river race data: ${participant.tag}`);
-              return;
+            else {
+              unusedDecksReport.push({
+                clanTag: clanEndOfDayRiverRaceData.clanTag,
+                unusedDecksReport: [reportPlayerData]
+              });
             }
-            const totalDecksUsedByTheEndOPreviousBattleDay = currentParticipantData.decksUsed;
-            const unuesdDecks = 4 - participant.decksUsedToday + totalDecksUsedByTheEndOPreviousBattleDay - participant.decksUsed;
-            if(unuesdDecks < 0 || unuesdDecks > 4) {
-              console.log(`${formattedCurrentTime} river race report generation cron failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}`);
-              return;
-            }
-            if(unuesdDecks != 0) {
-              const reportPlayerData = {
-                tag: participant.tag,
-                name: participant.name,
-                unusedDecks: unuesdDecks
-              };
-              let clanUnusedDecksReport = unusedDecksReport.find(e => e.clanTag == clanCurrentRiverRaceData.data?.clan?.tag)
-              if(clanUnusedDecksReport) {
-                clanUnusedDecksReport.unusedDecksReport.push(reportPlayerData);
-              }
-              else {
-                unusedDecksReport.push({
-                  clanTag: clanCurrentRiverRaceData.data?.clan?.tag,
-                  unusedDecksReport: [reportPlayerData]
-                });
-              }
-            }
-          });
-        }
-        unusedDecksReport.forEach(clanUnusedDecksReport => {
-          if(Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
-            sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
-            isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
           }
         });
-      } catch(e) {
-        console.error(e);
-        console.log(`${formattedCurrentTime} river race report generation cron failed`);
-        return;
       }
+
+      //Send Report
+      unusedDecksReport.forEach(clanUnusedDecksReport => {
+        if(Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
+          sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
+          isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
+        }
+      });
+    } catch(e) {
+      console.error(e);
+      console.log(`${formattedCurrentTime} river race report generation cron failed`);
+      return;
     }
   });
 
-  //Reset flags crons At minute 0 past hour 11, 12, and 13 on Sunday, Monday, Friday, and Saturday. [Offset 9]
-  cron.schedule('9 0 11,12,13 * * 0,1,5,6', async () => {
+  //Reset flags crons At minute 15, 30, and 45 past hour 11 on Sunday, Monday, Thursday, Friday, and Saturday [Offset 9]
+  cron.schedule('9 15,30,45 11 * * 0,1,4,5,6', async () => {
     var currentdate = getCurrentTime();
     console.log(`Reset counts and flags at ${currentdate}`)
-    isRiverRaceDataUpdatedToNextDay = false;
-    isDailyReportSent = {
-      '#2PYUJUL': false,
-      '#P9QQVJVG': false
-    };
+    isRiverRaceDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({...obj, [clanTag]: false}), {});
+    isDailyReportSent = clanListCache.reduce((obj, clanTag) => ({...obj, [clanTag]: false}), {});
   });
   
   //Helpers
