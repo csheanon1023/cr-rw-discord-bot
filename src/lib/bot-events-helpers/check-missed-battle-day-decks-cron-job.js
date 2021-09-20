@@ -64,7 +64,8 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
   });
 
   //CRON At every minute from 15 through 20 past hour 10 on Sunday, Monday, Friday, and Saturday [offset 6]
-  cron.schedule('6 15-20 10 * * 0,1,5,6', async () => {
+  // cron.schedule('6 15-20 10 * * 0,1,5,6', async () => {
+  cron.schedule('* * * * 0,1,5,6', async () => {
     const currentDate = new Date();
     const currentDay = currentDate.getDay();
     const previousRiverRacePeriodIndex = (currentDay + 5) % 7;
@@ -104,15 +105,15 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
       else if(previousRiverRacePeriodIndex == 6){
         const currentRiverRaceData = await Promise.all([ ...clanListCache.map(clan => riverRaceLogDataHelper.getRiverRaceLogData(clan)) ]);
         currentRiverRaceData.forEach(clanCurrentRiverRaceData => {
-          clanMostRecentEntryInRiverRaceLogs = clanCurrentRiverRaceData.data.items.items[0];
+          clanMostRecentEntryInRiverRaceLogs = clanCurrentRiverRaceData.data.items[0];
           clanStandings = clanMostRecentEntryInRiverRaceLogs.standings.filter(clanStandings => clanListCache.includes(clanStandings.clan.tag));
-          if(clanStandings.length == 0)
+          if(clanStandings.length != 1)
           return;
           // const createdDate = clanMostRecentEntryInRiverRaceLogs.createdDate;
           // TODO some validation
           endOfDayRiverRaceData.push({
-            participants: clanStandings.clan?.participants,
-            clanTag: clanStandings.clan?.tag
+            participants: clanStandings[0].clan?.participants,
+            clanTag: clanStandings[0].clan?.tag
           });
         });
       }
