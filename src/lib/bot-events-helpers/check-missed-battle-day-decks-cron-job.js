@@ -88,7 +88,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
             console.log(`${formattedCurrentTime} River race report generation, current data's period index suggests that war has not ended yet`);
             return;
           }
-          data.clan?.participants?.forEach(participant => participant.decksUsed = participant.decksUsed - participant. decksUsedToday);
+          data.clan?.participants?.forEach(participant => participant.decksUsed = participant.decksUsed - participant.decksUsedToday);
           endOfDayRiverRaceData.push({
             participants: data.clan?.participants,
             clanTag: data.clan?.tag
@@ -165,7 +165,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 
       //Send Report
       unusedDecksReport.forEach(clanUnusedDecksReport => {
-        if(clanUnusedDecksReport.unusedDecksReport?.lenght <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
+        if(clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
           sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
           isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
         }
