@@ -31,28 +31,28 @@ client.on('ready', () => {
   console.log(`${client.user.tag} has logged in.`);
 });
 
-// client.on('message', async (message) => {
-//   if (message.author.bot) return;
-//   if (message.content.startsWith(PREFIX)) {
-//     const [CMD_NAME, ...args] = message.content
-//       .trim()
-//       .substring(PREFIX.length)
-//       .split(/\s+/);
-//     if (CMD_NAME === 'bylevel') {
-//       warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
-//       return;
-//     }
-//   }
-// });
+client.on('message', async (message) => {
+  if (message.author.bot) return;
+  if (message.content.startsWith(PREFIX)) {
+    const [CMD_NAME, ...args] = message.content
+      .trim()
+      .substring(PREFIX.length)
+      .split(/\s+/);
+    if (CMD_NAME === 'bylevel') {
+      warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+      return;
+    }
+  }
+});
 
-// selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
-// selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
+selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
+selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
 
 //Bot login
 client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 //Start CRON Jobs
-// inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
 checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, {
   "#2PYUJUL": CLAN1_CHAT_CHANNEL_ID,
   "#P9QQVJVG": CLAN2_CHAT_CHANNEL_ID
