@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node -r dotenv/config ./src/bot.js",
-    "dev": "nodemon -r dotenv/config ./src/bot.js"
+    "dev": "nodemon -r dotenv/config ./src/bot.js",
+    "lint": "eslint . --ext .jsx,.js"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,7 @@
     "node-cron": "^3.0.0"
   },
   "devDependencies": {
+    "eslint": "^7.32.0",
     "nodemon": "^2.0.12"
   }
 }
