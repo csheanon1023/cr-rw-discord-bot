@@ -61,9 +61,6 @@ const resetMembersList = async (database, clanTag) => {
 */
 
 //SECTION export
-//TODO investigate default params in export @pranjal1006
-exports.initializeLastKnownMemberList = (database, currentClans) => {
-  if(currentClans == null || currentClans.length == 0)
-    currentClans = this.currentClans;
-  currentClans.forEach(clan => resetMembersList(database, clan));   
+exports.initializeLastKnownMemberList = (database, currentClansParam = currentClans) => {
+    currentClansParam.forEach(clan => resetMembersList(database, clan));   
 }

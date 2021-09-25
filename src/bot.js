@@ -4,6 +4,7 @@ const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers')
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
+const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
 
 //Database connection
 const database = databaseRepository.connectRealtimeDatabase();
@@ -22,6 +23,8 @@ const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
 const TEST_CHANNEL_ID = '870792677472489515'; //Add this to the array for testing
 const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
+const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
+const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
 
 //Event Handlers
 client.on('ready', () => {
@@ -50,3 +53,7 @@ client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 //Start CRON Jobs
 inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, {
+  "#2PYUJUL": CLAN1_CHAT_CHANNEL_ID,
+  "#P9QQVJVG": CLAN2_CHAT_CHANNEL_ID
+});

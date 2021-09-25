@@ -106,7 +106,6 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
         databaseRepository.setLastKnownMembersListData(data, database);
       });
       clanMembersCache = unchangedClans;
-      databaseRepository.setLastKnownMembersListData();
     }
   
     //log success
