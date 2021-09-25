@@ -1,5 +1,6 @@
-// DO NOT REFERENCE THIS OUTSIDE /scripts DIRECTORY 
-// USE THIS ONLY IF YOU KNOW WHAT YOU'RE DOING 
+/* eslint-disable no-unused-vars */
+// DO NOT REFERENCE THIS OUTSIDE /scripts DIRECTORY
+// USE THIS ONLY IF YOU KNOW WHAT YOU'RE DOING
 // ONLY TO BE USED WHEN DB NEEDS TO BE INITIALIZED/RESET (uncomment only the parts that you need)
 // to run script: node -r dotenv/config ./src/lib/database-helpers/scripts/initialize-database.js
 
