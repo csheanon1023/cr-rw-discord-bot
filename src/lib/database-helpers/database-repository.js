@@ -3,6 +3,8 @@ const admin = require('firebase-admin');
 
 const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
+const DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT = 'application-level-flags';
+const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
 
 exports.connectRealtimeDatabase = () => {
 	admin.initializeApp({
@@ -38,6 +40,52 @@ exports.getLastKnownBattleDayData = (database) => {
 exports.setLastKnownBattleDayData = (data, database) => {
 	let returnValue = false;
 	database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}`).update(data, (error) => {
+		if (error) {
+			console.log('Data could not be saved.' + error);
+		}
+		else {
+			console.log('Data saved successfully.');
+			returnValue = true;
+		}
+	});
+	return returnValue;
+};
+
+// application-flags
+exports.getApplicationFlagByKey = (flagKey, database) => {
+	return database.ref(`/${DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT}/${flagKey}`).once('value');
+};
+
+exports.bulkSetApplicationFlag = (data, database) => {
+	let returnValue = false;
+	if (Object.values(data).find(val => typeof val == 'boolean' == false) != undefined) {
+		console.log('Flags need boolean values');
+		return false;
+	}
+	database.ref(`/${DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT}`).update(data, (error) => {
+		if (error) {
+			console.log('Data could not be saved.' + error);
+		}
+		else {
+			console.log('Data saved successfully.');
+			returnValue = true;
+		}
+	});
+	return returnValue;
+};
+
+// current-war-missed-decks
+exports.getCurrentWarMissedDecksData = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+exports.setCurrentWarMissedDecksData = (data, database) => {
+	let returnValue = false;
+	if (Object.values(data).find(val => typeof val == 'boolean' == false) != undefined) {
+		console.log('Flags need boolean values');
+		return false;
+	}
+	database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}`).update(data, (error) => {
 		if (error) {
 			console.log('Data could not be saved.' + error);
 		}

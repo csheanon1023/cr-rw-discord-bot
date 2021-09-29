@@ -164,10 +164,31 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 			}
 
 			// Send Report
-			unusedDecksReport.forEach(clanUnusedDecksReport => {
+			unusedDecksReport.forEach(async clanUnusedDecksReport => {
 				if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
 					sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
-					isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
+					let index = 0;
+					do {
+						const isSaved = await databaseRepository.bulkSetApplicationFlag({ [`isDailyReportSent-${clanUnusedDecksReport.clanTag.substring(1)}`]: true }, database);
+						if (isSaved) isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
+						if (++index >= 5 && isDailyReportSent[clanUnusedDecksReport.clanTag] == false) {
+							console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save isDailyReportSent flag 5 retries: ${clanUnusedDecksReport.clanTag}`);
+							// TODO handle this, for now just setting the flag to true
+							isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
+						}
+					} while (isDailyReportSent[clanUnusedDecksReport.clanTag] == false && index < 5);
+					const currentWarMissedDecksData = databaseRepository.getCurrentWarMissedDecksData(clanUnusedDecksReport.clanTag, database);
+					// TODO handle null if(currentWarMissedDecksData)
+					// clanUnusedDecksReport.unusedDecksReport.forEach(reportPlayerData => {
+					// 	let updatedData = {};
+					// 	previousPlayerData = currentWarMissedDecksData.find(({ playerTag }) => reportPlayerData.tag == playerTag);
+					// 	if (previousPlayerData == undefined) {
+					// 		updatedData[previousPlayerData.playerTag] = {
+					// 			playerTag: 
+					// 		}
+					// 	}
+					// })
+					databaseRepository.setCurrentWarMissedDecksData();
 				}
 				else {console.log(`${formattedCurrentTime} river race report generation failed, clan ${clanUnusedDecksReport.clanTag} was either not listed or report had more than 50 players`);}
 			});
