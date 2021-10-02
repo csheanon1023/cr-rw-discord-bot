@@ -23,30 +23,31 @@ const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
 // const TEST_CHANNEL_ID = '870792677472489515'; // Add this to the array for testing
 const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
-const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
-const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+// TODO update channel IDS before deploying
+const CLAN1_CHAT_CHANNEL_ID = '886248413769895987';
+const CLAN2_CHAT_CHANNEL_ID = '886248413769895987';
 
 // Event Handlers
 client.on('ready', () => {
 	console.log(`${client.user.tag} has logged in.`);
 });
 
-client.on('message', async (message) => {
-	if (message.author.bot) return;
-	if (message.content.startsWith(PREFIX)) {
-		const [CMD_NAME, ...args] = message.content
-			.trim()
-			.substring(PREFIX.length)
-			.split(/\s+/);
-		if (CMD_NAME === 'bylevel') {
-			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
-			return;
-		}
-	}
-});
+// client.on('message', async (message) => {
+// 	if (message.author.bot) return;
+// 	if (message.content.startsWith(PREFIX)) {
+// 		const [CMD_NAME, ...args] = message.content
+// 			.trim()
+// 			.substring(PREFIX.length)
+// 			.split(/\s+/);
+// 		if (CMD_NAME === 'bylevel') {
+// 			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+// 			return;
+// 		}
+// 	}
+// });
 
-selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
-selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
+// selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
+// selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
 
 // Bot login
 client.login(process.env.DISCORDJS_BOT_TOKEN);
