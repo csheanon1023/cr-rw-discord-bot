@@ -79,13 +79,9 @@ exports.getCurrentWarMissedDecksData = (clanTag, database) => {
 	return database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}/${clanTag.substring(1)}`).once('value');
 };
 
-exports.setCurrentWarMissedDecksData = (data, database) => {
+exports.setCurrentWarMissedDecksData = (clanTag, dayId, data, database) => {
 	let returnValue = false;
-	if (Object.values(data).find(val => typeof val == 'boolean' == false) != undefined) {
-		console.log('Flags need boolean values');
-		return false;
-	}
-	database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}`).update(data, (error) => {
+	database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}/${clanTag.substring(1)}/${dayId}`).set(data, (error) => {
 		if (error) {
 			console.log('Data could not be saved.' + error);
 		}

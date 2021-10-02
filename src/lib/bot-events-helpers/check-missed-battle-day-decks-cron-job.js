@@ -166,29 +166,31 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 			// Send Report
 			unusedDecksReport.forEach(async clanUnusedDecksReport => {
 				if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
-					sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
-					let index = 0;
-					do {
-						const isSaved = await databaseRepository.bulkSetApplicationFlag({ [`isDailyReportSent-${clanUnusedDecksReport.clanTag.substring(1)}`]: true }, database);
-						if (isSaved) isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
-						if (++index >= 5 && isDailyReportSent[clanUnusedDecksReport.clanTag] == false) {
-							console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save isDailyReportSent flag 5 retries: ${clanUnusedDecksReport.clanTag}`);
-							// TODO handle this, for now just setting the flag to true
-							isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
-						}
-					} while (isDailyReportSent[clanUnusedDecksReport.clanTag] == false && index < 5);
-					const currentWarMissedDecksData = databaseRepository.getCurrentWarMissedDecksData(clanUnusedDecksReport.clanTag, database);
-					// TODO handle null if(currentWarMissedDecksData)
-					// clanUnusedDecksReport.unusedDecksReport.forEach(reportPlayerData => {
-					// 	let updatedData = {};
-					// 	previousPlayerData = currentWarMissedDecksData.find(({ playerTag }) => reportPlayerData.tag == playerTag);
-					// 	if (previousPlayerData == undefined) {
-					// 		updatedData[previousPlayerData.playerTag] = {
-					// 			playerTag: 
-					// 		}
-					// 	}
-					// })
-					databaseRepository.setCurrentWarMissedDecksData();
+					const isReportSentSuccessfully = sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
+					if (!isReportSentSuccessfully) {return;}
+
+					// persist report sent flag state in DB
+					let isFlagSavedInDatabase = false;
+					for (let index = 0; !isFlagSavedInDatabase && index < 5; index++) {
+						isFlagSavedInDatabase = await databaseRepository.bulkSetApplicationFlag({ [`isDailyReportSent-${clanUnusedDecksReport.clanTag.substring(1)}`]: true }, database);
+					}
+					if (!isFlagSavedInDatabase) {
+						console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save isDailyReportSent flag 5 retries: ${clanUnusedDecksReport.clanTag}`);
+						// TODO handle this, for now just setting the flag to true
+						isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
+					}
+					else {isDailyReportSent[clanUnusedDecksReport.clanTag] = true;}
+
+					// save the report in DB for calculation at the war ends
+					const dateId = currentDate.getDay().toString();
+					let isReportSavedInDatabase = false;
+					for (let index = 0; !isReportSavedInDatabase && index < 5; index++) {
+						isReportSavedInDatabase = databaseRepository.setCurrentWarMissedDecksData(clanUnusedDecksReport.clanTag, dateId, clanUnusedDecksReport.unusedDecksReport, database);
+					}
+					if (!isReportSavedInDatabase) {
+						console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save unused deck report in DB 5 retries: ${clanUnusedDecksReport.clanTag}`);
+						// TODO handle this, for now just setting the flag to true
+					}
 				}
 				else {console.log(`${formattedCurrentTime} river race report generation failed, clan ${clanUnusedDecksReport.clanTag} was either not listed or report had more than 50 players`);}
 			});
@@ -220,10 +222,10 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 	};
 
 	const sendMissedDeckReport = async (unusedDecksReport, channelId) => {
-		if (!unusedDecksReport || unusedDecksReport.length == 0) {return;}
+		if (!unusedDecksReport || unusedDecksReport.length == 0) {return false;}
 		if (channelList == null || Object.keys(channelList).length == 0) {
 			console.log('No channels defined for river race report');
-			return;
+			return false;
 		}
 		const channel = await client.channels.fetch(channelId);
 		const listOfPlayersWithUnusedDeckCount = unusedDecksReport
@@ -235,6 +237,11 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 		const tableHead = 'Player Name     UnusedDecks';
 		const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
 		const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}`;
-		channel.send(`\`\`\`${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\`\`\``);
+		return channel.send(`\`\`\`${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\`\`\``)
+			.then(() => true)
+			.catch((e) => {
+				console.log(e);
+				return false;
+			});
 	};
 };
