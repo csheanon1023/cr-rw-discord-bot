@@ -53,7 +53,7 @@ client.on('ready', () => {
 client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 // Start CRON Jobs
-inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+// inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
 checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, {
 	'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
 	'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
