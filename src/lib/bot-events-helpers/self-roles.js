@@ -5,7 +5,7 @@ exports.handleRoleAdd = (reaction, user, roleIds) => {
 	case '1️⃣':
 		member.roles.add(roleIds['#2PYUJUL'])
 			.then(({ user: userDetails }) => {
-				console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name} to ${userDetails.username}`);
+				console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#2PYUJUL']).name} to ${userDetails.username}`);
 			})
 			.catch((e) => {
 				console.error(e);
@@ -14,8 +14,8 @@ exports.handleRoleAdd = (reaction, user, roleIds) => {
 		break;
 	case '2️⃣':
 		member.roles.add(roleIds['#P9QQVJVG'])
-			.then(({ userDetails }) => {
-				console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} to ${userDetails.username}`);
+			.then(({ user: userDetails }) => {
+				console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#P9QQVJVG']).name} to ${userDetails.username}`);
 			})
 			.catch((e) => {
 				console.error(e);
@@ -31,9 +31,9 @@ exports.handleRoleRemove = (reaction, user, roleIds) => {
 	console.log(`${user.username} removed reaction ${name}`);
 	switch (name) {
 	case '1️⃣':
-		member.roles.remove(roleIds[0])
-			.then(({ userDetails }) => {
-				console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[0]).name} from ${userDetails.username} `);
+		member.roles.remove(roleIds['#2PYUJUL'])
+			.then(({ user: userDetails }) => {
+				console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#2PYUJUL']).name} from ${userDetails.username} `);
 			})
 			.catch((e) => {
 				console.error(e);
@@ -41,9 +41,9 @@ exports.handleRoleRemove = (reaction, user, roleIds) => {
 			});
 		break;
 	case '2️⃣':
-		member.roles.remove(roleIds[1])
-			.then(({ userDetails }) => {
-				console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds[1]).name} from ${userDetails.username}`);
+		member.roles.remove(roleIds['#P9QQVJVG'])
+			.then(({ user: userDetails }) => {
+				console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#P9QQVJVG']).name} from ${userDetails.username}`);
 			})
 			.catch((e) => {
 				console.error(e);
