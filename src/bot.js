@@ -16,15 +16,24 @@ const client = new Client({
 
 // Constants
 const PREFIX = '$';
+const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
+const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+const CLAN1_ROLE_ID = '873489388338810921';
+const CLAN2_ROLE_ID = '873489468466823218';
 const SELF_ROLE_MESSAGE_ID = '874040719495544862';
-const SELF_ROLE_CLAN_ROLE_IDS = [ '873489388338810921', '873489468466823218' ];
 const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
 // const TEST_CHANNEL_ID = '870792677472489515'; // Add this to the array for testing
 const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
-const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
-const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+const CLAN_WISE_CHANNEL_IDS = {
+	'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
+	'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
+};
+const CLAN_WISE_ROLE_IDS = {
+	'#2PYUJUL': CLAN1_ROLE_ID,
+	'#P9QQVJVG': CLAN2_ROLE_ID,
+};
 
 // Event Handlers
 client.on('ready', () => {
@@ -45,15 +54,23 @@ client.on('message', async (message) => {
 	}
 });
 
-selfRoles.handleRoleAdd(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
-selfRoles.handleRoleRemove(client, SELF_ROLE_MESSAGE_ID, SELF_ROLE_CLAN_ROLE_IDS);
+client.on('messageReactionAdd', (reaction, user) => {
+	if (user.bot) return;
+	console.log(`${user.username} reacted with ${reaction.emoji.name}`);
+	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+		selfRoles.handleRoleAdd(reaction, user, CLAN_WISE_ROLE_IDS);
+});
+
+client.on('messageReactionRemove', (reaction, user) => {
+	if (user.bot) return;
+	console.log(`${user.username} removed reaction ${reaction.emoji.name}`);
+	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+		selfRoles.handleRoleRemove(reaction, user, CLAN_WISE_ROLE_IDS);
+});
 
 // Bot login
 client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 // Start CRON Jobs
 inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
-checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, {
-	'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
-	'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
-});
+checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, CLAN_WISE_CHANNEL_IDS);
