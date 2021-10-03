@@ -213,8 +213,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 	});
 
 	// At every minute from 30 through 35 past hour 10 on Monday [offset 12]
-	// cron.schedule('12 30-35 10 * * 1', async () => {
-	cron.schedule('12 43 13 * * *', async () => {
+	cron.schedule('12 30-35 10 * * 1', async () => {
 		// Get the 4 day's reports from DB
 		const currentDate = new Date();
 		// const currentDay = currentDate.getDay();  will be used for validation
