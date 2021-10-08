@@ -13,6 +13,7 @@ To use this code, follow the instructions:
     - **CLASH_ROYALE_API_TOKEN** - Your CR API token `Required` https://developer.clashroyale.com/#/getting-started
     - **FIREBASE_DATABASE_URL** - Firebase realtine database URL `Required`
     - **FIREBASE_ADMIN_SDK_CONFIG** - Firebase admin service account config (minified) `Required` https://firebase.google.com/docs/admin/setup#initialize-sdk
+    - **ENVIRONMENT_TYPE** - Environment that the code is running in (production | staging | dev)
 
 4) Initialize data into your realtime database instance using this script `/src/lib/database-helpers/scripts/initialize-database.js`
 
