@@ -25,6 +25,8 @@ jobs:
     needs: lint-test
     if: github.ref == 'refs/heads/staging'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - name: Install IBM Cloud CLI
         run: curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
         shell: bash
