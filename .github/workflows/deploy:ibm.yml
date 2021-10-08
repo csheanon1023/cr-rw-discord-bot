@@ -1,5 +1,8 @@
-name: Deploy to IBM Cloud Foundry
-on: push
+name: Deploy to Staging on IBM
+on: 
+  push:
+    branches:
+      - staging
 jobs:
   lint-test:
     name: ESLint
@@ -35,5 +38,5 @@ jobs:
         run: ibmcloud target --cf
         shell: bash
       - name: Deploy to Cloud Foundry
-        run: ibmcloud cf push cr-bot-staging --no-manifest --no-route -m 128M
+        run: ibmcloud cf push cr-bot-staging -u process --no-manifest --no-route -m 128M -k 512M
         shell: bash
