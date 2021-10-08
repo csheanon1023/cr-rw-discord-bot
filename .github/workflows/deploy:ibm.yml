@@ -1,8 +1,5 @@
-name: Deploy to Staging on IBM
-on: 
-  push:
-    branches:
-      - staging
+name: Deploy to IBM Cloud Foundry
+on: push
 jobs:
   lint-test:
     name: ESLint
