@@ -10,7 +10,7 @@ const clanDataHelper = require('../../clash-royale-api-helpers/clan-data-helper'
 // SECTION helper functions
 // generate clan-names object
 const resetClanList = async (database, clanTags) => {
-	clanTags.forEach(async tag => {
+	for (const tag of clanTags) {
 		const { data } = await clanDataHelper.getClanData(tag);
 		if (data == null || data.name == '' || !data) {return;}
 		const ref = database.ref(`/clan-names/${tag.substring(1)}`);
@@ -23,7 +23,7 @@ const resetClanList = async (database, clanTags) => {
 				console.log('Data saved successfully.');
 			}
 		});
-	});
+	}
 };
 
 // SECTION clan-names object (uncomment only the parts that you need, this will mutate the DB)

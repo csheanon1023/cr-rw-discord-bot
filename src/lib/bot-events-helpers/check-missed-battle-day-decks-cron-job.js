@@ -165,7 +165,8 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 			}
 
 			// Send Report
-			unusedDecksReport.forEach(async clanUnusedDecksReport => {
+			// TODO add try
+			for (const clanUnusedDecksReport of unusedDecksReport) {
 				if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
 					const isReportSentSuccessfully = sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
 					if (!isReportSentSuccessfully) {return;}
@@ -193,7 +194,7 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 					}
 				}
 				else {console.log(`${formattedCurrentTime} river race report generation failed, clan ${clanUnusedDecksReport.clanTag} was either not listed or report had more than 50 players`);}
-			});
+			}
 		}
 		catch (e) {
 			console.error(e);
@@ -212,11 +213,11 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 		// TODO reset the end of war DB entries
 	});
 
-	// At every minute from 30 through 35 past hour 10 on Monday [offset 12]
+	// At every minute from 30 through 35 past hour 10 on Monday [offset 12] End of race report
 	cron.schedule('12 30-35 10 * * 1', async () => {
 		// Get the 4 day's reports from DB
 		const currentDate = new Date();
-		// const currentDay = currentDate.getDay();  will be used for validation
+		// const currentDay = currentDate.getDay();  TODO will be used for validation
 		const formattedCurrentTime = getCurrentTime(currentDate);
 		const endOfWeekRiverRaceReport = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: {} }), {});
 
@@ -231,10 +232,11 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 		}
 
 		try {
-			clanListCache.forEach(async cacheClanTag => {
+			// Aggregate data
+			for (const cacheClanTag of clanListCache) {
 				if (isWeeklyEndOfRaceReportSent[cacheClanTag]) {
 					console.log(`${formattedCurrentTime} End of race report for ${cacheClanTag} has already been sent`);
-					return;
+					continue;
 				}
 
 				const previousRiverRaceReportsSnpashot = await databaseRepository.getCurrentWarMissedDecksData(cacheClanTag, database);
@@ -244,11 +246,11 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 				const currentClanMemberListTags = currentClanMemberList.data.items.map(member => member.tag);
 
 				// aggregate the data into one report with player name, unused decks X/Total and in clan
-				previousRiverRaceReportsSnpashotValue.forEach((clanPreviousRiverRaceReport, dayId) => {
+				for (const [dayId, clanPreviousRiverRaceReport] of Object.entries(previousRiverRaceReportsSnpashotValue)) {
 					// TODO Validate the data
 					if (!clanPreviousRiverRaceReport || clanPreviousRiverRaceReport.length == 0) {
 						console.log(`${formattedCurrentTime} End of race report, Skipping aggregation for day ${dayId}, no data`);
-						return;
+						continue;
 					}
 					clanPreviousRiverRaceReport.forEach(playerPreviousRiverRaceReport => {
 						if (!clanEndOfWeekRiverRaceReport[playerPreviousRiverRaceReport.tag]) {
@@ -264,34 +266,31 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 							clanEndOfWeekRiverRaceReport[playerPreviousRiverRaceReport.tag].totalAvailable += 4;
 						}
 					});
-				});
-				sendReport();
-			});
+				}
+			}
 
 			// Send Report
-			const sendReport = () => {
-				for (const [clanKey, clanEndOfWeekRiverRaceReport] of Object.entries(endOfWeekRiverRaceReport)) {
-					if (Object.keys(channelList).includes(clanKey)) {
-						const allPagesKeys = Object.keys(clanEndOfWeekRiverRaceReport);
-						const numberOfPages = Math.ceil(allPagesKeys.length / 30);
-						const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
-						for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
-							pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
-								if (flag) return;
-								flagsArray[i] = sendWeeklyEndOfRaceMissedDeckReport(allPagesKeys.slice(30 * i, 30 * (i + 1)), clanEndOfWeekRiverRaceReport, channelList[clanKey]);
-							});
-						}
-						if (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null) {
-							console.log(`${formattedCurrentTime} end of race report generation cron failed, not able to properly send all pages 5 retries: ${pageFlagsIsReportSentSuccessfully.find(val => val == false)}`);
-							// TODO handle this, maybe send a message that report is incomplete
-							isWeeklyEndOfRaceReportSent[clanKey] = true;
-						}
-						else
-							isWeeklyEndOfRaceReportSent[clanKey] = true;
+			for (const [clanKey, clanEndOfWeekRiverRaceReport] of Object.entries(endOfWeekRiverRaceReport)) {
+				if (Object.keys(channelList).includes(clanKey)) {
+					const allPagesKeys = Object.keys(clanEndOfWeekRiverRaceReport);
+					const numberOfPages = Math.ceil(allPagesKeys.length / 30);
+					const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
+					for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
+						pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
+							if (flag) return;
+							flagsArray[i] = sendWeeklyEndOfRaceMissedDeckReport(allPagesKeys.slice(30 * i, 30 * (i + 1)), clanEndOfWeekRiverRaceReport, channelList[clanKey]);
+						});
 					}
-					else {console.log(`${formattedCurrentTime} end of race report generation cron failed, clan ${clanKey} was not listed`);}
+					if (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null) {
+						console.log(`${formattedCurrentTime} end of race report generation cron failed, not able to properly send all pages 5 retries: ${pageFlagsIsReportSentSuccessfully.find(val => val == false)}`);
+						// TODO handle this, maybe send a message that report is incomplete
+						isWeeklyEndOfRaceReportSent[clanKey] = true;
+					}
+					else
+						isWeeklyEndOfRaceReportSent[clanKey] = true;
 				}
-			};
+				else {console.log(`${formattedCurrentTime} end of race report generation cron failed, clan ${clanKey} was not listed`);}
+			}
 		}
 		catch (e) {
 			console.error(e);
