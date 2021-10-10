@@ -77,7 +77,9 @@ if (process.env.ENVIRONMENT_TYPE === 'production') {
 
 	// Start CRON Jobs
 	inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
-	checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
 }
 
 else if (process.env.ENVIRONMENT_TYPE === 'staging') {
@@ -119,7 +121,9 @@ else if (process.env.ENVIRONMENT_TYPE === 'staging') {
 
 	// Start CRON Jobs
 	// inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
-	checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
 }
 
 else if (process.env.ENVIRONMENT_TYPE === 'dev') {
@@ -161,5 +165,7 @@ else if (process.env.ENVIRONMENT_TYPE === 'dev') {
 
 	// Start CRON Jobs
 	inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
-	checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
 }
