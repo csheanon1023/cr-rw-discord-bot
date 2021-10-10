@@ -271,27 +271,27 @@ exports.scheduleCronsTOCollectDataAboutMissedBattleDecks = (database, client, ch
 			// Send Report
 			const sendReport = () => {
 				for (const [clanKey, clanEndOfWeekRiverRaceReport] of Object.entries(endOfWeekRiverRaceReport)) {
-				if (Object.keys(channelList).includes(clanKey)) {
-					const allPagesKeys = Object.keys(clanEndOfWeekRiverRaceReport);
-					const numberOfPages = Math.ceil(allPagesKeys.length / 30);
-					const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
-					for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
-						pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
-							if (flag) return;
-							flagsArray[i] = sendWeeklyEndOfRaceMissedDeckReport(allPagesKeys.slice(30 * i, 30 * (i + 1)), clanEndOfWeekRiverRaceReport, channelList[clanKey]);
-						});
+					if (Object.keys(channelList).includes(clanKey)) {
+						const allPagesKeys = Object.keys(clanEndOfWeekRiverRaceReport);
+						const numberOfPages = Math.ceil(allPagesKeys.length / 30);
+						const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
+						for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
+							pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
+								if (flag) return;
+								flagsArray[i] = sendWeeklyEndOfRaceMissedDeckReport(allPagesKeys.slice(30 * i, 30 * (i + 1)), clanEndOfWeekRiverRaceReport, channelList[clanKey]);
+							});
+						}
+						if (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null) {
+							console.log(`${formattedCurrentTime} end of race report generation cron failed, not able to properly send all pages 5 retries: ${pageFlagsIsReportSentSuccessfully.find(val => val == false)}`);
+							// TODO handle this, maybe send a message that report is incomplete
+							isWeeklyEndOfRaceReportSent[clanKey] = true;
+						}
+						else
+							isWeeklyEndOfRaceReportSent[clanKey] = true;
 					}
-					if (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null) {
-						console.log(`${formattedCurrentTime} end of race report generation cron failed, not able to properly send all pages 5 retries: ${pageFlagsIsReportSentSuccessfully.find(val => val == false)}`);
-						// TODO handle this, maybe send a message that report is incomplete
-						isWeeklyEndOfRaceReportSent[clanKey] = true;
-					}
-					else
-						isWeeklyEndOfRaceReportSent[clanKey] = true;
+					else {console.log(`${formattedCurrentTime} end of race report generation cron failed, clan ${clanKey} was not listed`);}
 				}
-				else {console.log(`${formattedCurrentTime} end of race report generation cron failed, clan ${clanKey} was not listed`);}
-				}
-			}
+			};
 		}
 		catch (e) {
 			console.error(e);
