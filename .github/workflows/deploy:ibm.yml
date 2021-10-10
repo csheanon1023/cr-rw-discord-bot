@@ -1,0 +1,42 @@
+name: Deploy to Staging on IBM
+on: 
+  push:
+    branches:
+      - staging
+jobs:
+  lint-test:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Node v14
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+  deploy:
+    runs-on: ubuntu-latest
+    needs: lint-test
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install IBM Cloud CLI
+        run: curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+        shell: bash
+      - name: Install Cloud Foundry CLI
+        run: ibmcloud cf install
+        shell: bash
+      - name: Authenticate with IBM Cloud CLI
+        run: ibmcloud login --apikey "${{ secrets.IBM_CLOUD_API_KEY }}" -r "${{ secrets.IBM_CLOUD_FOUNDRY_REGION }}" -g "${{ secrets.IBM_CLOUD_RESOURCE_GROUP_ID }}"
+        shell: bash
+      - name: Target a Cloud Foundry org and space
+        run: ibmcloud target --cf
+        shell: bash
+      - name: Deploy to Cloud Foundry
+        run: ibmcloud cf push cr-bot-staging -u process --no-manifest --no-route -m 128M -k 512M
+        shell: bash
