@@ -176,11 +176,10 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 				});
 			}
 
-			if (isSendAction) {
-				// Send Report
-				// TODO add try
-				for (const clanUnusedDecksReport of unusedDecksReport) {
-					if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
+			// Send Report
+			for (const clanUnusedDecksReport of unusedDecksReport) {
+				if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
+					if (isSendAction) {
 						const isReportSentSuccessfully = sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
 						if (!isReportSentSuccessfully) {return;}
 						// persist report sent flag state in DB
@@ -194,22 +193,22 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 							isDailyReportSent[clanUnusedDecksReport.clanTag] = true;
 						}
 						else {isDailyReportSent[clanUnusedDecksReport.clanTag] = true;}
-						// save the report in DB for calculation at the war ends
-						let isReportSavedInDatabase = false;
-						for (let index = 0; !isReportSavedInDatabase && index < 5; index++) {
-							isReportSavedInDatabase = databaseRepository.setCurrentWarMissedDecksData(clanUnusedDecksReport.clanTag, currentDay.toString(), clanUnusedDecksReport.unusedDecksReport, database);
-						}
-						if (!isReportSavedInDatabase) {
-							console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save unused deck report in DB 5 retries: ${clanUnusedDecksReport.clanTag}`);
-							// TODO handle this, for now just setting the flag to true
-						}
 					}
-					else {console.log(`${formattedCurrentTime} river race report generation failed, clan ${clanUnusedDecksReport.clanTag} was either not listed or report had more than 50 players`);}
+					else {
+						// set falgs to true to skip retries
+						isDailyReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: true }), {});
+					}
+					// save the report in DB for calculation at the war ends
+					let isReportSavedInDatabase = false;
+					for (let index = 0; !isReportSavedInDatabase && index < 5; index++) {
+						isReportSavedInDatabase = databaseRepository.setCurrentWarMissedDecksData(clanUnusedDecksReport.clanTag, currentDay.toString(), clanUnusedDecksReport.unusedDecksReport, database);
+					}
+					if (!isReportSavedInDatabase) {
+						console.log(`${formattedCurrentTime} river race report generation cron failed, not able to save unused deck report in DB 5 retries: ${clanUnusedDecksReport.clanTag}`);
+						// TODO handle this, for now just setting the flag to true
+					}
 				}
-			}
-			else {
-				// set falgs to true to skip retries
-				isDailyReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: true }), {});
+				else {console.log(`${formattedCurrentTime} river race report generation failed, clan ${clanUnusedDecksReport.clanTag} was either not listed or report had more than 50 players`);}
 			}
 		}
 		catch (e) {
