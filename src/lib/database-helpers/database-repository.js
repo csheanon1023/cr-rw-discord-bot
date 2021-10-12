@@ -1,9 +1,11 @@
+// to run script: node -r dotenv/config ./src/lib/database-helpers/database-repository.js
 const { firebaseConfig } = require('./firebaseConfig');
 const admin = require('firebase-admin');
 
 const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
 const DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT = 'discord-id-to-cr-accounts-map';
+const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-requests';
 const DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT = 'application-level-flags';
 const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
 
@@ -59,7 +61,26 @@ const getDiscordIdToCrAccountsMap = (database) => {
 
 const setDiscordIdToCrAccountsMap = (userDiscordId, playerTags, database) => {
 	let returnValue = false;
-	database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}/${userDiscordId}`).update(playerTags, (error) => {
+	database.ref(`/${DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT}/${userDiscordId}`).set(playerTags, (error) => {
+		if (error) {
+			console.log('Data could not be saved.' + error);
+		}
+		else {
+			console.log('Data saved successfully.');
+			returnValue = true;
+		}
+	});
+	return returnValue;
+};
+
+// pending-verification-requests
+const getPendingVerificationRequests = (database) => {
+	return database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}`).once('value');
+};
+
+const setPendingVerificationRequests = (userDiscordId, verificationParams, database) => {
+	let returnValue = false;
+	database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}/${userDiscordId}`).set(verificationParams, (error) => {
 		if (error) {
 			console.log('Data could not be saved.' + error);
 		}
@@ -125,4 +146,10 @@ module.exports = {
 	bulkSetApplicationFlag,
 	getCurrentWarMissedDecksData,
 	setCurrentWarMissedDecksData,
+	getPendingVerificationRequests,
+	setPendingVerificationRequests,
 };
+
+setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], connectRealtimeDatabase());
+// getLastKnownMembersListData('#2PYUJUL', connectRealtimeDatabase())
+// 	.then((list) => console.log(list.val()));
