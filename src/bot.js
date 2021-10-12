@@ -16,6 +16,9 @@ const client = new Client({
 
 // Constants
 const PREFIX = '$';
+// TODO update channel IDS before deploying
+// const CLAN1_CHAT_CHANNEL_ID = '886248413769895987';
+// const CLAN2_CHAT_CHANNEL_ID = '886248413769895987';
 const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
 const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
 const CLAN1_ROLE_ID = '873489388338810921';
@@ -35,42 +38,134 @@ const CLAN_WISE_ROLE_IDS = {
 	'#P9QQVJVG': CLAN2_ROLE_ID,
 };
 
-// Event Handlers
-client.on('ready', () => {
-	console.log(`${client.user.tag} has logged in.`);
-});
+if (process.env.ENVIRONMENT_TYPE === 'production') {
+	// Event Handlers
+	client.on('ready', () => {
+		console.log(`${client.user.tag} has logged in.[PRODUCTION]`);
+	});
 
-client.on('message', async (message) => {
-	if (message.author.bot) return;
-	if (message.content.startsWith(PREFIX)) {
-		const [CMD_NAME, ...args] = message.content
-			.trim()
-			.substring(PREFIX.length)
-			.split(/\s+/);
-		if (CMD_NAME === 'bylevel') {
-			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
-			return;
+	client.on('message', async (message) => {
+		if (message.author.bot) return;
+		if (message.content.startsWith(PREFIX)) {
+			const [CMD_NAME, ...args] = message.content
+				.trim()
+				.substring(PREFIX.length)
+				.split(/\s+/);
+			if (CMD_NAME === 'bylevel') {
+				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+				return;
+			}
 		}
-	}
-});
+	});
 
-client.on('messageReactionAdd', (reaction, user) => {
-	if (user.bot) return;
-	console.log(`${user.username} reacted with ${reaction.emoji.name}`);
-	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
-		selfRoles.handleRoleAdd(reaction, user, CLAN_WISE_ROLE_IDS);
-});
+	client.on('messageReactionAdd', (reaction, user) => {
+		if (user.bot) return;
+		console.log(`${user.username} reacted with ${reaction.emoji.name}`);
+		if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+			selfRoles.handleRoleAdd(reaction, user, CLAN_WISE_ROLE_IDS);
+	});
 
-client.on('messageReactionRemove', (reaction, user) => {
-	if (user.bot) return;
-	console.log(`${user.username} removed reaction ${reaction.emoji.name}`);
-	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
-		selfRoles.handleRoleRemove(reaction, user, CLAN_WISE_ROLE_IDS);
-});
+	client.on('messageReactionRemove', (reaction, user) => {
+		if (user.bot) return;
+		console.log(`${user.username} removed reaction ${reaction.emoji.name}`);
+		if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+			selfRoles.handleRoleRemove(reaction, user, CLAN_WISE_ROLE_IDS);
+	});
 
-// Bot login
-client.login(process.env.DISCORDJS_BOT_TOKEN);
+	// Bot login
+	client.login(process.env.DISCORDJS_BOT_TOKEN);
 
-// Start CRON Jobs
-inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
-checkMissedBattleDayDecksCronJob.scheduleCronsTOCollectDataAboutMissedBattleDecks(database, client, CLAN_WISE_CHANNEL_IDS);
+	// Start CRON Jobs
+	inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
+}
+
+else if (process.env.ENVIRONMENT_TYPE === 'staging') {
+	// Event Handlers
+	client.on('ready', () => {
+		console.log(`${client.user.tag} has logged in.[STAGING]`);
+	});
+
+	// client.on('message', async (message) => {
+	// 	if (message.author.bot) return;
+	// 	if (message.content.startsWith(PREFIX)) {
+	// 		const [CMD_NAME, ...args] = message.content
+	// 			.trim()
+	// 			.substring(PREFIX.length)
+	// 			.split(/\s+/);
+	// 		if (CMD_NAME === 'bylevel') {
+	// 			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+	// 			return;
+	// 		}
+	// 	}
+	// });
+
+	// client.on('messageReactionAdd', (reaction, user) => {
+	// 	if (user.bot) return;
+	// 	console.log(`${user.username} reacted with ${reaction.emoji.name}`);
+	// 	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+	// 		selfRoles.handleRoleAdd(reaction, user, CLAN_WISE_ROLE_IDS);
+	// });
+
+	// client.on('messageReactionRemove', (reaction, user) => {
+	// 	if (user.bot) return;
+	// 	console.log(`${user.username} removed reaction ${reaction.emoji.name}`);
+	// 	if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+	// 		selfRoles.handleRoleRemove(reaction, user, CLAN_WISE_ROLE_IDS);
+	// });
+
+	// Bot login
+	client.login(process.env.DISCORDJS_BOT_TOKEN);
+
+	// Start CRON Jobs
+	// inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+}
+
+else if (process.env.ENVIRONMENT_TYPE === 'dev') {
+	// Event Handlers
+	client.on('ready', () => {
+		console.log(`${client.user.tag} has logged in.[DEV]`);
+	});
+
+	client.on('message', async (message) => {
+		if (message.author.bot) return;
+		if (message.content.startsWith(PREFIX)) {
+			const [CMD_NAME, ...args] = message.content
+				.trim()
+				.substring(PREFIX.length)
+				.split(/\s+/);
+			if (CMD_NAME === 'bylevel') {
+				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+				return;
+			}
+		}
+	});
+
+	client.on('messageReactionAdd', (reaction, user) => {
+		if (user.bot) return;
+		console.log(`${user.username} reacted with ${reaction.emoji.name}`);
+		if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+			selfRoles.handleRoleAdd(reaction, user, CLAN_WISE_ROLE_IDS);
+	});
+
+	client.on('messageReactionRemove', (reaction, user) => {
+		if (user.bot) return;
+		console.log(`${user.username} removed reaction ${reaction.emoji.name}`);
+		if (reaction.message.id === SELF_ROLE_MESSAGE_ID)
+			selfRoles.handleRoleRemove(reaction, user, CLAN_WISE_ROLE_IDS);
+	});
+
+	// Bot login
+	client.login(process.env.DISCORDJS_BOT_TOKEN);
+
+	// Start CRON Jobs
+	inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+	checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+	checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+}

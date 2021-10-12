@@ -28,7 +28,6 @@ exports.handleRoleAdd = (reaction, user, roleIds) => {
 exports.handleRoleRemove = (reaction, user, roleIds) => {
 	const { name } = reaction.emoji;
 	const member = reaction.message.guild.members.cache.get(user.id);
-	console.log(`${user.username} removed reaction ${name}`);
 	switch (name) {
 	case '1️⃣':
 		member.roles.remove(roleIds['#2PYUJUL'])

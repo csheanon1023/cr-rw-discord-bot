@@ -109,7 +109,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 		// log success
 		const currentTimestamp = Date.now();
 		const timeSinceLastSuccess = lastInOutCronSuccessTimestamp == -1 ? 0 : Math.round((currentTimestamp - lastInOutCronSuccessTimestamp) / 1000);
-		console.log(timeSinceLastSuccess + ' running a task every minute');
+		if (timeSinceLastSuccess > 100 || timeSinceLastSuccess < 0)
+			console.info(timeSinceLastSuccess + ' in-out cron seems to have skipped some runs, please check');
 		lastInOutCronSuccessTimestamp = currentTimestamp;
 	});
 
@@ -121,10 +122,10 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 			console.log('No channels defined for in-out log');
 			return;
 		}
-		channelList.forEach(async channelId => {
+		for (const channelId of channelList) {
 			const channel = await client.channels.fetch(channelId);
 			channel.send(` [${clan}] This player has ${change}: ${playerDetails.name}.`);
-		});
+		}
 		console.log(`[${clan}] This player has ${change}: ${playerDetails.name}.`);
 	};
 };
