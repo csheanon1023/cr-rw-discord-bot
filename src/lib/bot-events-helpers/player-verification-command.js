@@ -57,8 +57,8 @@ const sendEmbed = (filename, deckCardNames, deckLink) => {
 		.setTitle('Player Verification')
 		.setDescription('Use this deck in a battle and reply in here with `!verify` to complete verification')
 		.addFields(
-			{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
 			{ name: 'Deck', value: deckCardNames, inline: true },
+			{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
 			// { name: 'Avg. Elixir', value: '3.0', inline: true },
 		)
 		.attachFiles([ `./assets/player-verification-deck-images/${filename}` ])
