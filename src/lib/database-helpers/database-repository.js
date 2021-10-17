@@ -150,6 +150,6 @@ module.exports = {
 	setPendingVerificationRequests,
 };
 
-setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], connectRealtimeDatabase());
+// setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], connectRealtimeDatabase());
 // getLastKnownMembersListData('#2PYUJUL', connectRealtimeDatabase())
 // 	.then((list) => console.log(list.val()));
