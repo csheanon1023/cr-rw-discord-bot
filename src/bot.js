@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers');
+const playerVerificationCommand = require('./lib/bot-events-helpers/player-verification-command');
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
@@ -53,6 +54,28 @@ if (process.env.ENVIRONMENT_TYPE === 'production') {
 				.split(/\s+/);
 			if (CMD_NAME === 'bylevel') {
 				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+				return;
+			}
+
+			if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+				// check syntax and send proper syntax if invalid
+
+				// if args has player tag, initiate verification process
+				// if player is not in one of the clans, send proper message
+				// if player tag is already linked, send proper message
+				// if playertag verification has already been initialted, send proper message
+				// if all checks passed
+				// generate a verification deck
+				// persist the deck, imageid, player tag, discordID and other relavant info in DB
+				// send the embed
+				// PLAN garbage collection for images created
+
+				// if args does not have a player tag, check the pending verification log for the id-tag pair
+				// if not found send proper message
+				// if found trigger a check for the last 10 battles
+				// if verification fails, send proper message
+				// if verification passes, update the discord-cracc object, remove from pending verification, send the completed message
+				playerVerificationCommand.verifyPlayer(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
 				return;
 			}
 		}
