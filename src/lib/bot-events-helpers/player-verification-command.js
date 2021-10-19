@@ -89,3 +89,25 @@ const createDeckImage = async (discordId, randomDeck) => {
 	const embed = createVerificationDeckEmbed(filename, randomDeck.deckCardNames, randomDeck.deckLink, playerTag, discordUserName);
 	sendEmbedsGroupedByTargetChannelIds(client, { '879114632420278284': [embed] });
 })();
+
+const verifyPlayerOrFault = (message, args) {
+	// check syntax and send proper syntax if invalid
+
+	// if args has player tag, initiate verification process
+	// if player is not in one of the clans, send proper message
+	// if player tag is already linked, send proper message
+	// if playertag verification has already been initialted, send proper message
+	// if all checks passed
+	// generate a verification deck
+	// persist the deck, imageid, player tag, discordID and other relavant info in DB
+	// send the embed
+	// PLAN garbage collection for images created
+
+	// if args does not have a player tag, check the pending verification log for the id-tag pair
+	// if not found send proper message
+	// if found trigger a check for the last 10 battles
+	// if verification fails, send proper message
+	// if verification passes, update the discord-cracc object, remove from pending verification, send the completed message
+}
+
+module.exports = { verifyPlayerOrFault };
