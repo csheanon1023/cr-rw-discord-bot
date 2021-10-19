@@ -89,8 +89,9 @@ const createDeckImage = async (discordId, randomDeck) => {
 	const embed = createVerificationDeckEmbed(filename, randomDeck.deckCardNames, randomDeck.deckLink, playerTag, discordUserName);
 	sendEmbedsGroupedByTargetChannelIds(client, { '879114632420278284': [embed] });
 })();
-
-const verifyPlayerOrFault = (message, args) {
+// TODO remove
+// eslint-disable-next-line no-unused-vars
+const verifyPlayerOrFault = (message, args) => {
 	// check syntax and send proper syntax if invalid
 
 	// if args has player tag, initiate verification process
@@ -108,6 +109,6 @@ const verifyPlayerOrFault = (message, args) {
 	// if found trigger a check for the last 10 battles
 	// if verification fails, send proper message
 	// if verification passes, update the discord-cracc object, remove from pending verification, send the completed message
-}
+};
 
 module.exports = { verifyPlayerOrFault };
