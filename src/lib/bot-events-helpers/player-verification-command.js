@@ -3,6 +3,7 @@ const { MessageEmbed } = require('discord.js');
 const Jimp = require('jimp');
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const { createSyntaxErrorHelpEmbed } = require('../utils/genericEmbeds');
+const { getAlreadyLinkedPlayerTags, setAlreadyLinkedPlayerTags, getPendingVerificationRequests, setPendingVerificationRequests } = require('../database-helpers/database-repository');
 
 const generateRandomDeck = async (playerData) => {
 	const cards = playerData.cards;
@@ -68,10 +69,22 @@ const startNewVerificationFlow = async (message, playerTag) => {
 	const discordId = message.author.id;
 	// if player is not in one of the clans, send proper message
 	if (!playerTag.startsWith('#') || !playerTag.substring(1).match(/^[0-9A-Z]+$/)) {
-		return message.reply('Whoops! Looks like the clan tag is invalid, please check.');
+		return message.reply('Whoops! Looks like the payer tag is invalid, please check.');
 	}
 	// if player tag is already linked, send proper message
+	const alreadyLinkedPlayerTagsPromise = getAlreadyLinkedPlayerTags();
+	const alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
+	if (alreadyLinkedPlayerTags.find(playerTag)) {
+		return message.reply('Whoops! Looks like the player tag is already linked to a discord account, please contact admin to check who has registered this tag or to have the link removed in case you are trying to link it to a new discord ID.');
+		// TODO add command to allow check who it is linked to
+	}
 	// if playertag verification has already been initialted, send proper message
+	const pendingVerificationRequestsPromise = getPendingVerificationRequests();
+	const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
+	if (pendingVerificationRequests.find(playerTag)) {
+		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with \`$verify\` to complete account verification.');
+		// TODO add ability to fetch the verification deck
+	}
 	// if all checks passed
 	const playerResponse = await playerDataHelper.getPlayerData(playerTag);
 	const playerData = playerResponse.data;

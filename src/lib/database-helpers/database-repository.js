@@ -161,15 +161,3 @@ module.exports = {
 	getAlreadyLinkedPlayerTags,
 	setAlreadyLinkedPlayerTags,
 };
-
-(async () => {
-	const database = connectRealtimeDatabase();
-	// setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], database);
-	// getLastKnownMembersListData('#2PYUJUL', database)
-	// 	.then((list) => console.log(list.val()));
-
-	const returnValue = await setAlreadyLinkedPlayerTags([ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], database);
-	console.log(returnValue);
-	getAlreadyLinkedPlayerTags(database)
-		.then((list) => console.log(list.val()));
-})();
