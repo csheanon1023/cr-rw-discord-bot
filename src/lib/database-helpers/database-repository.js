@@ -6,6 +6,7 @@ const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
 const DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT = 'discord-id-to-cr-accounts-map';
 const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-requests';
+const DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT = 'already-linked-player-tags';
 const DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT = 'application-level-flags';
 const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
 
@@ -25,14 +26,15 @@ const getLastKnownMembersListData = (clanTag, database) => {
 };
 
 const setLastKnownMembersListData = (data, database) => {
-	database.ref(`/${DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT}/${data.clan.substring(1)}`).set(data, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT}/${data.clan.substring(1)}`).set(data)
+		.then(() => {
 			console.log('Data saved successfully.');
-		}
-	});
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 // last-known-battle-day-data
@@ -41,17 +43,15 @@ const getLastKnownBattleDayData = (database) => {
 };
 
 const setLastKnownBattleDayData = (data, database) => {
-	let returnValue = false;
-	database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}`).update(data, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT}`).update(data)
+		.then(() => {
 			console.log('Data saved successfully.');
-			returnValue = true;
-		}
-	});
-	return returnValue;
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 // discord-id-to-cr-accounts-map
@@ -60,17 +60,15 @@ const getDiscordIdToCrAccountsMap = (database) => {
 };
 
 const setDiscordIdToCrAccountsMap = (userDiscordId, playerTags, database) => {
-	let returnValue = false;
-	database.ref(`/${DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT}/${userDiscordId}`).set(playerTags, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT}/${userDiscordId}`).set(playerTags)
+		.then(() => {
 			console.log('Data saved successfully.');
-			returnValue = true;
-		}
-	});
-	return returnValue;
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 // pending-verification-requests
@@ -79,17 +77,33 @@ const getPendingVerificationRequests = (database) => {
 };
 
 const setPendingVerificationRequests = (userDiscordId, verificationParams, database) => {
-	let returnValue = false;
-	database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}/${userDiscordId}`).set(verificationParams, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}/${userDiscordId}`).set(verificationParams)
+		.then(() => {
 			console.log('Data saved successfully.');
-			returnValue = true;
-		}
-	});
-	return returnValue;
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
+};
+
+// already-linked-player-tags
+const getAlreadyLinkedPlayerTags = (database) => {
+	return database.ref(`/${DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT}`).once('value');
+};
+
+// TODO for now sending the full object, in future just do a push and use security rules for duplicates
+const setAlreadyLinkedPlayerTags = (playerTags, database) => {
+	return database.ref(`/${DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT}`).set(playerTags)
+		.then(() => {
+			console.log('Data saved successfully.');
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 // application-flags
@@ -98,21 +112,19 @@ const getApplicationFlagByKey = (flagKey, database) => {
 };
 
 const bulkSetApplicationFlag = (data, database) => {
-	let returnValue = false;
 	if (Object.values(data).find(val => typeof val == 'boolean' == false) != undefined) {
 		console.log('Flags need boolean values');
 		return false;
 	}
-	database.ref(`/${DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT}`).update(data, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT}`).update(data)
+		.then(() => {
 			console.log('Data saved successfully.');
-			returnValue = true;
-		}
-	});
-	return returnValue;
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 // current-war-missed-decks
@@ -121,17 +133,15 @@ const getCurrentWarMissedDecksData = (clanTag, database) => {
 };
 
 const setCurrentWarMissedDecksData = (clanTag, dayId, data, database) => {
-	let returnValue = false;
-	database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}/${clanTag.substring(1)}/${dayId}`).set(data, (error) => {
-		if (error) {
-			console.log('Data could not be saved.' + error);
-		}
-		else {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT}/${clanTag.substring(1)}/${dayId}`).set(data)
+		.then(() => {
 			console.log('Data saved successfully.');
-			returnValue = true;
-		}
-	});
-	return returnValue;
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
 };
 
 module.exports = {
@@ -148,8 +158,18 @@ module.exports = {
 	setCurrentWarMissedDecksData,
 	getPendingVerificationRequests,
 	setPendingVerificationRequests,
+	getAlreadyLinkedPlayerTags,
+	setAlreadyLinkedPlayerTags,
 };
 
-// setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], connectRealtimeDatabase());
-// getLastKnownMembersListData('#2PYUJUL', connectRealtimeDatabase())
-// 	.then((list) => console.log(list.val()));
+(async () => {
+	const database = connectRealtimeDatabase();
+	// setDiscordIdToCrAccountsMap('897456930891640892', [ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], database);
+	// getLastKnownMembersListData('#2PYUJUL', database)
+	// 	.then((list) => console.log(list.val()));
+
+	const returnValue = await setAlreadyLinkedPlayerTags([ '#PQVV898P2', '#U80J98P2', '#YV9JQYP08' ], database);
+	console.log(returnValue);
+	getAlreadyLinkedPlayerTags(database)
+		.then((list) => console.log(list.val()));
+})();

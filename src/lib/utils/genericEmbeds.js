@@ -1,6 +1,6 @@
 const { MessageEmbed } = require('discord.js');
 
-
+// TODO add fields can be improved maybe
 const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 	const syntaxErrorHelpEmbed = new MessageEmbed()
 		.setColor('#00fafa')
