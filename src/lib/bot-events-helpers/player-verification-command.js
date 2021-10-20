@@ -19,6 +19,7 @@ const generateRandomDeck = async (playerData) => {
 	returnObject.deckLink = DECK_LINK_BASE_URL + cardArray.map(card => card.id).join(';');
 	returnObject.cardImageUrls = cardArray.map(card => card.iconUrls.medium);
 	returnObject.deckCardNames = cardArray.map(card => card.name).join(', ');
+	returnObject.deckCardIdsStringCommaSeparated = cardArray.map(card => card.id).join(',');
 
 	return returnObject;
 };
@@ -63,7 +64,8 @@ const createDeckImage = async (discordId, randomDeck) => {
 	}
 };
 
-const startNewVerificationFlow = async (message, playerTag) => {
+const startNewVerificationFlow = async (message, playerTag, database) => {
+	// TODO add validation to prevent someone to initiate multiple verifications at the same time, or implement it in a way to make this a non issue
 	// const playerTag = '#JGGCL2Q22';
 	const discordUserName = message.author.username;
 	const discordId = message.author.id;
@@ -82,28 +84,42 @@ const startNewVerificationFlow = async (message, playerTag) => {
 	const pendingVerificationRequestsPromise = getPendingVerificationRequests();
 	const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
 	if (pendingVerificationRequests.find(playerTag)) {
-		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with \`$verify\` to complete account verification.');
+		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else have triggered verification with your tag, please notify admin');
 		// TODO add ability to fetch the verification deck
 	}
 	// if all checks passed
-	const playerResponse = await playerDataHelper.getPlayerData(playerTag);
-	const playerData = playerResponse.data;
-	// generate a verification deck
-	const randomDeck = await generateRandomDeck(playerData);
-	const filename = await createDeckImage(discordId, randomDeck);
-	if (!filename)
-		return false;
-	// persist the deck, imageid, player tag, discordID and other relavant info in DB
-	// send the embed
-	const embed = createVerificationDeckEmbed(filename, randomDeck.deckCardNames, randomDeck.deckLink, playerTag, discordUserName);
-	await message.channel.send(embed);
-	// sendEmbedsGroupedByTargetChannelIds(client, { '879114632420278284': [embed] });
-	// PLAN garbage collection for images created
+	try {
+		const playerResponse = await playerDataHelper.getPlayerData(playerTag);
+		const playerData = playerResponse.data;
+		// generate a verification deck
+		const randomDeck = await generateRandomDeck(playerData);
+		const filename = await createDeckImage(discordId, randomDeck);
+		if (!filename)
+			return false;
+		// persist the deck, imageid, player tag, discordID and other relavant info in DB
+		// TODO implement retry mechanism if db requests fail
+		const isPendingVerificationRequestpersisted = setPendingVerificationRequests([...pendingVerificationRequests, playerTag], database);
+		const someNameObject = {
+			deck: randomDeck.deckCardIdsStringCommaSeparated,
+			imageFileName: filename,
+			playerTag: playerTag,
+			discordId: discordId,
+		};
+		// TODO create another DB object to persist this data
+		// send the embed
+		const embed = createVerificationDeckEmbed(filename, randomDeck.deckCardNames, randomDeck.deckLink, playerTag, discordUserName);
+		await message.channel.send(embed);
+		// sendEmbedsGroupedByTargetChannelIds(client, { '879114632420278284': [embed] });
+		// PLAN garbage collection for images created
+	}
+	catch (error) {
+		console.error('get player data likely failed, check, \nerror:' + error);
+		// TODO add check for error and selectively send error reply, rn just sending it whenever fails
+		return message.reply('Whoops! Looks like the payer tag is invalid, please check.');
+	}
 };
 
-// TODO remove
-// eslint-disable-next-line no-unused-vars
-const verifyPlayerOrFault = async (message, args) => {
+const verifyPlayerOrFault = async (message, args, database) => {
 	const syntaxObject = {
 		syntax: '!verify [?playerTag]',
 		argumentList: {
@@ -132,7 +148,7 @@ const verifyPlayerOrFault = async (message, args) => {
 
 	// if args has player tag, initiate verification process
 	if (args.length === 1) {
-		await startNewVerificationFlow(message, args[0]);
+		await startNewVerificationFlow(message, args[0], database);
 	}
 
 	// if args does not have a player tag, check the pending verification log for the id-tag pair

@@ -58,7 +58,7 @@ if (process.env.ENVIRONMENT_TYPE === 'production') {
 			}
 
 			// if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
-			// 	playerVerificationCommand.verifyPlayerOrFault(message, args);
+			// 	playerVerificationCommand.verifyPlayerOrFault(message, args, database);
 			// 	return;
 			// }
 		}
@@ -106,7 +106,7 @@ else if (process.env.ENVIRONMENT_TYPE === 'staging') {
 			// 	return;
 			// }
 			if (CMD_NAME === 'verify' && message.channel.id === '899384962128707616') {
-				playerVerificationCommand.verifyPlayerOrFault(message, args);
+				playerVerificationCommand.verifyPlayerOrFault(message, args, database);
 				return;
 			}
 		}
@@ -154,7 +154,7 @@ else if (process.env.ENVIRONMENT_TYPE === 'dev') {
 				return;
 			}
 			if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
-				playerVerificationCommand.verifyPlayerOrFault(message, args);
+				playerVerificationCommand.verifyPlayerOrFault(message, args, database);
 				return;
 			}
 		}
