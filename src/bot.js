@@ -57,10 +57,10 @@ if (process.env.ENVIRONMENT_TYPE === 'production') {
 				return;
 			}
 
-			if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
-				playerVerificationCommand.verifyPlayerOrFault(message, args);
-				return;
-			}
+			// if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+			// 	playerVerificationCommand.verifyPlayerOrFault(message, args);
+			// 	return;
+			// }
 		}
 	});
 
@@ -94,19 +94,23 @@ else if (process.env.ENVIRONMENT_TYPE === 'staging') {
 		console.log(`${client.user.tag} has logged in.[STAGING]`);
 	});
 
-	// client.on('message', async (message) => {
-	// 	if (message.author.bot) return;
-	// 	if (message.content.startsWith(PREFIX)) {
-	// 		const [CMD_NAME, ...args] = message.content
-	// 			.trim()
-	// 			.substring(PREFIX.length)
-	// 			.split(/\s+/);
-	// 		if (CMD_NAME === 'bylevel') {
-	// 			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
-	// 			return;
-	// 		}
-	// 	}
-	// });
+	client.on('message', async (message) => {
+		if (message.author.bot) return;
+		if (message.content.startsWith(PREFIX)) {
+			const [CMD_NAME, ...args] = message.content
+				.trim()
+				.substring(PREFIX.length)
+				.split(/\s+/);
+			// if (CMD_NAME === 'bylevel') {
+			// 	warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+			// 	return;
+			// }
+			if (CMD_NAME === 'verify' && message.channel.id === '899384962128707616') {
+				playerVerificationCommand.verifyPlayerOrFault(message, args);
+				return;
+			}
+		}
+	});
 
 	// client.on('messageReactionAdd', (reaction, user) => {
 	// 	if (user.bot) return;
@@ -147,6 +151,10 @@ else if (process.env.ENVIRONMENT_TYPE === 'dev') {
 				.split(/\s+/);
 			if (CMD_NAME === 'bylevel') {
 				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+				return;
+			}
+			if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+				playerVerificationCommand.verifyPlayerOrFault(message, args);
 				return;
 			}
 		}
