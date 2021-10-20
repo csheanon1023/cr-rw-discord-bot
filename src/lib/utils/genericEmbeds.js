@@ -16,11 +16,6 @@ const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 			return [...argumentFieldValuesAccumulator, `\`${argument}\` - ${argumentList[argument]?.message} ${argumentList[argument]?.isOptional && '`optional`'}`];
 		}, []);
 		syntaxErrorHelpEmbed.addField('Argument List', argumentFieldValues.join('\n'), false);
-		// for (const argument in argumentList) {
-		// 	const argumentFieldValue = `\`${argument}\` - ${argumentList[argument]?.message} ${argumentList[argument]?.isOptional && '`optional`'}`;
-		// 	argumentFieldValues.push(argumentFieldValues);
-		// 	syntaxErrorHelpEmbed.addField(`\`${argument}\``, `${argumentList[argument]?.message} ${argumentList[argument]?.isOptional && '`optional`'}`, false);
-		// }
 	}
 
 	if (Object.keys(usages).length > 0) {
@@ -30,14 +25,23 @@ const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 		syntaxErrorHelpEmbed.addField('Usage', usageFieldValues.join('\n'), false);
 	}
 
-	// if (Object.keys(usages).length > 0) {
-	// 	syntaxErrorHelpEmbed.addField('Usages', 'for now some text', false);
-	// 	for (const usage in usages) {
-	// 		syntaxErrorHelpEmbed.addField(`${usages[usage]?.useCase}`, `\`${usages[usage]?.syntax}\``, false);
-	// 	}
-	// }
-
 	return syntaxErrorHelpEmbed;
 };
 
-module.exports = { createSyntaxErrorHelpEmbed };
+// TODO move this to apt directory once discord libs are setup
+const sendEmbedsGroupedByTargetChannelIds = (client, embedsGroupedByTargetChannelIds) => {
+	const getChannelPromises = Object.keys(embedsGroupedByTargetChannelIds)?.map(channelId => client.channels.fetch(channelId));
+	return Promise.all(getChannelPromises).then(channels => {
+		const sendMessagesPromises = channels.reduce((sendPromises, channel) => {
+			return [...sendPromises, ...embedsGroupedByTargetChannelIds[channel.id]?.map(embed => channel.send(embed))];
+		}, []);
+		return Promise.all(sendMessagesPromises)
+			.then(() => true)
+			.catch(error => console.error(error.message));
+	});
+};
+
+module.exports = {
+	createSyntaxErrorHelpEmbed,
+	sendEmbedsGroupedByTargetChannelIds,
+};
