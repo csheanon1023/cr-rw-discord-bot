@@ -75,14 +75,16 @@ const createDeckImage = async (discordId, randomDeck) => {
 
 const checkBattleLogsToVerifyPlayer = async (playerTag, verificationDeckCommaSeparated) => {
 	try {
-		const verificationDeckArray = verificationDeckCommaSeparated.split(',');
+		const verificationDeckArray = verificationDeckCommaSeparated.split(',').map(card => parseInt(card));
 		if (verificationDeckArray.length != 8) {
 			console.error('Failure in discord-cr mapping, deck from DB seems invalid');
 			return false;
 		}
 		const { data: playerBattleLogData } = await playerBattleLogDataHelper.getPlayerBattleLogData(playerTag);
 		let verificationStatus = false;
-		Object.values(playerBattleLogData).forEach(({ team }) => {
+		playerBattleLogData.forEach(({ team }) => {
+			if (verificationStatus)
+				return;
 			const { cards } = team.find(({ tag }) => tag == playerTag);
 			const cardIds = cards.map(card => card.id);
 			// megadeck challenge
@@ -108,16 +110,16 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 		return message.reply('Whoops! Looks like the payer tag is invalid, please check.');
 	}
 	// if player tag is already linked, send proper message
-	const alreadyLinkedPlayerTagsPromise = getAlreadyLinkedPlayerTags();
+	const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
 	const alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
-	if (alreadyLinkedPlayerTags.find(playerTag)) {
+	if (alreadyLinkedPlayerTags && alreadyLinkedPlayerTags.find(playerTag)) {
 		return message.reply('Whoops! Looks like the player tag is already linked to a discord account, please contact admin to check who has registered this tag or to have the link removed in case you are trying to link it to a new discord ID.');
 		// TODO add command to allow check who it is linked to
 	}
 	// if playertag verification has already been initialted, send proper message
-	const pendingVerificationRequestsPromise = getPendingVerificationRequests();
-	const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
-	if (pendingVerificationRequests.find(playerTag)) {
+	const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
+	let pendingVerificationRequests = pendingVerificationRequestsPromise.val();
+	if (pendingVerificationRequests && pendingVerificationRequests.find(tag => tag == playerTag)) {
 		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else have triggered verification with your tag, please notify admin');
 		// TODO add ability to fetch the verification deck
 	}
@@ -138,6 +140,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 			playerTag: playerTag,
 			discordId: discordId,
 		};
+		pendingVerificationRequests = pendingVerificationRequests || [];
 		const isPendingVerificationRequestpersisted = setPendingVerificationRequests([...pendingVerificationRequests, playerTag], database);
 		const isPendingMappingRequestDetailsPersisted = setPendingMappingRequestDetailsData(discordId, playerTag, verificationRequestDetails, database);
 		// send the embed
@@ -163,6 +166,9 @@ const completePendingVerificationRequest = async (message, database) => {
 	// if not found send proper message
 	const pendingVerificationRequestDetailsPromise = await getPendingMappingRequestDetailsData(database);
 	const pendingVerificationRequestDetails = pendingVerificationRequestDetailsPromise.val();
+	if (!pendingVerificationRequestDetails) {
+		return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
+	}
 	const pendingRequestsForThisUser = pendingVerificationRequestDetails[discordId];
 	if (!pendingRequestsForThisUser) {
 		return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
@@ -174,10 +180,11 @@ const completePendingVerificationRequest = async (message, database) => {
 		if (await checkBattleLogsToVerifyPlayer(pendingRequestDetails.playerTag, pendingRequestDetails.deck)) {
 			// TODO do batch or transaction writes
 			const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
-			const alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
+			let alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
+			alreadyLinkedPlayerTags = alreadyLinkedPlayerTags || [];
 			const issetAlreadyLinkedPlayerTagsPersisted = await setAlreadyLinkedPlayerTags([...alreadyLinkedPlayerTags, pendingRequestDetails.playerTag], database);
 
-			const isPendingMappingRequestDetailsDataRemoved = await removePendingMappingRequestDetailsData(pendingRequestDetails.discordId, pendingRequestDetails.playerTag);
+			const isPendingMappingRequestDetailsDataRemoved = await removePendingMappingRequestDetailsData(pendingRequestDetails.discordId, pendingRequestDetails.playerTag, database);
 
 			const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
 			const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
@@ -189,6 +196,9 @@ const completePendingVerificationRequest = async (message, database) => {
 			}
 			// TODO send in an embed
 			message.reply(`Player Tag ${pendingRequestDetails.playerTag} is now linked to Discord user ${discordUserName}`);
+		}
+		else {
+			message.reply(`Verification failed for Player Tag ${pendingRequestDetails.playerTag}`);
 		}
 	}
 };
