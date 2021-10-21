@@ -2,13 +2,18 @@
 const { firebaseConfig } = require('./firebaseConfig');
 const admin = require('firebase-admin');
 
+// Flags
+const DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT = 'application-level-flags';
+// In-Out log
 const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
+// Unused decks
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
-const DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT = 'discord-id-to-cr-accounts-map';
+const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
+// Discord - CR mapping
 const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-requests';
 const DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT = 'already-linked-player-tags';
-const DB_KEY_APPLICATION_LEVEL_FLAGS_OBJECT = 'application-level-flags';
-const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
+const DB_KEY_PENDING_MAPPING_REQUEST_DETAILS_OBJECT = 'pending-mapping-request-details';
+const DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT = 'discord-id-to-cr-accounts-map';
 
 const connectRealtimeDatabase = () => {
 	admin.initializeApp({
@@ -76,8 +81,8 @@ const getPendingVerificationRequests = (database) => {
 	return database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}`).once('value');
 };
 
-const setPendingVerificationRequests = (userDiscordId, verificationParams, database) => {
-	return database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}/${userDiscordId}`).set(verificationParams)
+const setPendingVerificationRequests = (verificationRequests, database) => {
+	return database.ref(`/${DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT}`).set(verificationRequests)
 		.then(() => {
 			console.log('Data saved successfully.');
 			return true;
@@ -144,6 +149,36 @@ const setCurrentWarMissedDecksData = (clanTag, dayId, data, database) => {
 		});
 };
 
+// pending-mapping-request-details
+const getPendingMappingRequestDetailsData = (database) => {
+	return database.ref(`/${DB_KEY_PENDING_MAPPING_REQUEST_DETAILS_OBJECT}`).once('value');
+};
+
+const setPendingMappingRequestDetailsData = (discordId, playerTag, data, database) => {
+	return database.ref(`/${DB_KEY_PENDING_MAPPING_REQUEST_DETAILS_OBJECT}/${discordId}/${playerTag.substring(1)}`).set(data)
+		.then(() => {
+			console.log('Data saved successfully.');
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
+};
+
+const removePendingMappingRequestDetailsData = (discordId, playerTag, database) => {
+	// TODO do nested delete fo disocrd ID as well
+	return database.ref(`/${DB_KEY_PENDING_MAPPING_REQUEST_DETAILS_OBJECT}/${discordId}/${playerTag.substring(1)}`).remove()
+		.then(() => {
+			console.log(`Pending Mapping Request Details Data removed successfully. ${discordId} ${playerTag}`);
+			return true;
+		})
+		.catch(error => {
+			console.log(`Pending Mapping Request Details Data could not be removed. ${discordId} ${playerTag}` + error);
+			return false;
+		});
+};
+
 module.exports = {
 	connectRealtimeDatabase,
 	getLastKnownMembersListData,
@@ -160,4 +195,7 @@ module.exports = {
 	setPendingVerificationRequests,
 	getAlreadyLinkedPlayerTags,
 	setAlreadyLinkedPlayerTags,
+	getPendingMappingRequestDetailsData,
+	setPendingMappingRequestDetailsData,
+	removePendingMappingRequestDetailsData,
 };
