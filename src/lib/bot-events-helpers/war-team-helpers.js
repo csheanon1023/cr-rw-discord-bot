@@ -29,7 +29,7 @@ exports.getMembersByLevel = async (message, args, accessLevel) => {
 		responseData.push(formatPlayerData(playerData));
 	}
 	message.reply('Here\'s the data you requested:\n');
-	responseData.forEach(res => message.channel.send(`\`\`\`${res}\`\`\``));
+	responseData.forEach(res => message.channel.send(`\`\`\`\n${res}\n\`\`\``));
 };
 
 const formatPlayerData = (playerData) => {
