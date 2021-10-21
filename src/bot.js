@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers');
+const playerVerificationCommand = require('./lib/bot-events-helpers/player-verification-command');
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
@@ -55,6 +56,11 @@ if (process.env.ENVIRONMENT_TYPE === 'production') {
 				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
 				return;
 			}
+
+			// if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+			// 	playerVerificationCommand.verifyPlayerOrFault(message, args, database);
+			// 	return;
+			// }
 		}
 	});
 
@@ -88,19 +94,23 @@ else if (process.env.ENVIRONMENT_TYPE === 'staging') {
 		console.log(`${client.user.tag} has logged in.[STAGING]`);
 	});
 
-	// client.on('message', async (message) => {
-	// 	if (message.author.bot) return;
-	// 	if (message.content.startsWith(PREFIX)) {
-	// 		const [CMD_NAME, ...args] = message.content
-	// 			.trim()
-	// 			.substring(PREFIX.length)
-	// 			.split(/\s+/);
-	// 		if (CMD_NAME === 'bylevel') {
-	// 			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
-	// 			return;
-	// 		}
-	// 	}
-	// });
+	client.on('message', async (message) => {
+		if (message.author.bot) return;
+		if (message.content.startsWith(PREFIX)) {
+			const [CMD_NAME, ...args] = message.content
+				.trim()
+				.substring(PREFIX.length)
+				.split(/\s+/);
+			// if (CMD_NAME === 'bylevel') {
+			// 	warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+			// 	return;
+			// }
+			if (CMD_NAME === 'verify' && message.channel.id === '899384962128707616') {
+				playerVerificationCommand.verifyPlayerOrFault(message, args, database);
+				return;
+			}
+		}
+	});
 
 	// client.on('messageReactionAdd', (reaction, user) => {
 	// 	if (user.bot) return;
@@ -141,6 +151,10 @@ else if (process.env.ENVIRONMENT_TYPE === 'dev') {
 				.split(/\s+/);
 			if (CMD_NAME === 'bylevel') {
 				warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+				return;
+			}
+			if (CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+				playerVerificationCommand.verifyPlayerOrFault(message, args, database);
 				return;
 			}
 		}

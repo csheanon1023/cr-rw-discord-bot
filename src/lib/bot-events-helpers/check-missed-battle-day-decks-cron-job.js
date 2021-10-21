@@ -371,7 +371,7 @@ const scheduleCronToGenerateEndOfRaceMissedBattleDecksReport = (database, client
 			}))
 			.sort((player1, player2) => {
 				if (player2.isInClan != player1.isInClan)
-					return parseInt(player2.unuesdDecks.split('/')[0]) - parseInt(player1.unuesdDecks.split('/')[0]);
+					return parseInt(player2?.unuesdDecks?.split('/')[0]) - parseInt(player1?.unuesdDecks?.split('/')[0]);
 				return player1.isInClan == 'Yes' ? 1 : -1;
 			});
 		const tableHead = 'Player Name     UnusedDecks  In Clan';
