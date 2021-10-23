@@ -64,7 +64,7 @@ case 'staging':
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: false,
 		isGenerateEndOfRiverRaceReportEnabled: true,
-		isSendActionEndOfRiverRaceReportEnabled: false,
+		isSendActionEndOfRiverRaceReportEnabled: true,
 	};
 	break;
 case 'dev':
