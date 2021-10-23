@@ -17,6 +17,7 @@
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "firebase-admin": "^9.11.1",
+    "jimp": "^0.16.1",
     "node-cron": "^3.0.0"
   },
   "devDependencies": {

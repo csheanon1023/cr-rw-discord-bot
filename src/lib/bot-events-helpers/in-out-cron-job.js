@@ -122,10 +122,10 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 			console.log('No channels defined for in-out log');
 			return;
 		}
-		channelList.forEach(async channelId => {
+		for (const channelId of channelList) {
 			const channel = await client.channels.fetch(channelId);
 			channel.send(` [${clan}] This player has ${change}: ${playerDetails.name}.`);
-		});
+		}
 		console.log(`[${clan}] This player has ${change}: ${playerDetails.name}.`);
 	};
 };
