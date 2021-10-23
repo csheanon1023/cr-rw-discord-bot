@@ -96,7 +96,7 @@ default:
 
 // Event Handlers
 client.on('ready', () => {
-	console.log(`${client.user.tag} has logged in.[PRODUCTION]`);
+	console.log(`${client.user.tag} has logged in.[${process.env.ENVIRONMENT_TYPE}]`);
 });
 
 client.on('message', async (message) => {
@@ -111,7 +111,7 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isVerifyDiscordCrLinkEnabled && CMD_NAME === 'verify' && message.channelId === '899384962128707616') {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isVerifyDiscordCrLinkEnabled && CMD_NAME === 'verify' && message.channel.id === '899384962128707616') {
 			playerVerificationCommand.verifyPlayerOrFault(message, args, database);
 			return;
 		}
