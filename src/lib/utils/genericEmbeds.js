@@ -9,7 +9,7 @@ const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 		.setTimestamp();
 
 	if (syntax)
-		syntaxErrorHelpEmbed.addField('Syntax', `\`\`\`${syntax}\`\`\``, false);
+		syntaxErrorHelpEmbed.addField('Syntax', `\`\`\`\n${syntax}\n\`\`\``, false);
 
 	if (Object.keys(argumentList).length > 0) {
 		const argumentFieldValues = Object.keys(argumentList).reduce((argumentFieldValuesAccumulator, argument) => {
@@ -20,7 +20,7 @@ const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 
 	if (Object.keys(usages).length > 0) {
 		const usageFieldValues = Object.keys(usages).reduce((usageFieldValuesAccumulator, usage) => {
-			return [...usageFieldValuesAccumulator, `**${usages[usage]?.useCase}**\n\`\`\`${usages[usage]?.syntax}\`\`\``];
+			return [...usageFieldValuesAccumulator, `**${usages[usage]?.useCase}**\n\`\`\`\n${usages[usage]?.syntax}\n\`\`\``];
 		}, []);
 		syntaxErrorHelpEmbed.addField('Usage', usageFieldValues.join('\n'), false);
 	}

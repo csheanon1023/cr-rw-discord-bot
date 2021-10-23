@@ -39,7 +39,7 @@ const createVerificationDeckEmbed = (filename, deckCardNames, deckLink, playerTa
 	const verificatioDeckEmbed = new MessageEmbed()
 		.setColor('#ae00ff')
 		.setTitle('Player Verification')
-		.setDescription('Use this deck in a battle and reply in here with `!verify` to complete verification')
+		.setDescription('Use this deck in a battle and reply in here with `$verify` to complete verification')
 		.addFields(
 			{ name: 'Discord User', value: `${discordUserName}`, inline: true },
 			{ name: 'Player Tag', value: `${playerTag}`, inline: true },
@@ -170,11 +170,11 @@ const completePendingVerificationRequest = async (message, database) => {
 		const pendingVerificationRequestDetailsPromise = await getPendingMappingRequestDetailsData(database);
 		const pendingVerificationRequestDetails = pendingVerificationRequestDetailsPromise.val();
 		if (!pendingVerificationRequestDetails) {
-			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
+			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `$verify [playerTag]`, if you have already requested one please check with admin.');
 		}
 		const pendingRequestsForThisUser = pendingVerificationRequestDetails[discordId];
 		if (!pendingRequestsForThisUser) {
-			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
+			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `$verify [playerTag]`, if you have already requested one please check with admin.');
 		}
 		// if found, trigger a check for the last 10 battles
 		for (const pendingRequests in pendingRequestsForThisUser) {
@@ -219,7 +219,7 @@ const completePendingVerificationRequest = async (message, database) => {
 
 const verifyPlayerOrFault = async (message, args, database) => {
 	const syntaxObject = {
-		syntax: '!verify [?playerTag]',
+		syntax: '$verify [?playerTag]',
 		argumentList: {
 			playerTag: {
 				message: 'tag of the CR account that you want to verify',
@@ -229,11 +229,11 @@ const verifyPlayerOrFault = async (message, args, database) => {
 		usages: {
 			initiate: {
 				useCase: 'To initiate verification of your account',
-				syntax: '!verify [playerTag]',
+				syntax: '$verify [playerTag]',
 			},
 			complete: {
 				useCase: 'To complete account verification after using the verification deck in a battle',
-				syntax: '!verify',
+				syntax: '$verify',
 			},
 		},
 	};
