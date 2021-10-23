@@ -112,7 +112,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 	// if player tag is already linked, send proper message
 	const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
 	const alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
-	if (alreadyLinkedPlayerTags && alreadyLinkedPlayerTags.find(playerTag)) {
+	if (alreadyLinkedPlayerTags && alreadyLinkedPlayerTags.find(tag => tag == playerTag)) {
 		return message.reply('Whoops! Looks like the player tag is already linked to a discord account, please contact admin to check who has registered this tag or to have the link removed in case you are trying to link it to a new discord ID.');
 		// TODO add command to allow check who it is linked to
 	}
@@ -120,7 +120,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 	const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
 	let pendingVerificationRequests = pendingVerificationRequestsPromise.val();
 	if (pendingVerificationRequests && pendingVerificationRequests.find(tag => tag == playerTag)) {
-		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else have triggered verification with your tag, please notify admin');
+		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else has triggered verification with your tag, please notify admin');
 		// TODO add ability to fetch the verification deck
 	}
 	// if all checks passed
