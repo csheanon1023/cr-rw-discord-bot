@@ -12,6 +12,8 @@ const {
 	getPendingMappingRequestDetailsData,
 	setPendingMappingRequestDetailsData,
 	removePendingMappingRequestDetailsData,
+	getDiscordIdToCrAccountsMap,
+	setDiscordIdToCrAccountsMap,
 } = require('../database-helpers/database-repository');
 
 const generateRandomDeck = async (playerData) => {
@@ -112,7 +114,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 	// if player tag is already linked, send proper message
 	const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
 	const alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
-	if (alreadyLinkedPlayerTags && alreadyLinkedPlayerTags.find(playerTag)) {
+	if (alreadyLinkedPlayerTags && alreadyLinkedPlayerTags.find(tag => tag == playerTag)) {
 		return message.reply('Whoops! Looks like the player tag is already linked to a discord account, please contact admin to check who has registered this tag or to have the link removed in case you are trying to link it to a new discord ID.');
 		// TODO add command to allow check who it is linked to
 	}
@@ -120,7 +122,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 	const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
 	let pendingVerificationRequests = pendingVerificationRequestsPromise.val();
 	if (pendingVerificationRequests && pendingVerificationRequests.find(tag => tag == playerTag)) {
-		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else have triggered verification with your tag, please notify admin');
+		return message.reply('Whoops! Looks like verification for this player tag is already in progress, please play a battle with the verification deck and reply with `$verify` to complete account verification. If someone else has triggered verification with your tag, please notify admin');
 		// TODO add ability to fetch the verification deck
 	}
 	// if all checks passed
@@ -161,45 +163,57 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 };
 
 const completePendingVerificationRequest = async (message, database) => {
-	const discordUserName = message.author.username;
-	const discordId = message.author.id;
-	// if not found send proper message
-	const pendingVerificationRequestDetailsPromise = await getPendingMappingRequestDetailsData(database);
-	const pendingVerificationRequestDetails = pendingVerificationRequestDetailsPromise.val();
-	if (!pendingVerificationRequestDetails) {
-		return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
-	}
-	const pendingRequestsForThisUser = pendingVerificationRequestDetails[discordId];
-	if (!pendingRequestsForThisUser) {
-		return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
-	}
-	// if found, trigger a check for the last 10 battles
-	for (const pendingRequests in pendingRequestsForThisUser) {
-		const pendingRequestDetails = pendingRequestsForThisUser[pendingRequests];
-		// if verification passes, update the discord-cracc object, remove from pending verification, send the completed message
-		if (await checkBattleLogsToVerifyPlayer(pendingRequestDetails.playerTag, pendingRequestDetails.deck)) {
-			// TODO do batch or transaction writes
-			const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
-			let alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
-			alreadyLinkedPlayerTags = alreadyLinkedPlayerTags || [];
-			const issetAlreadyLinkedPlayerTagsPersisted = await setAlreadyLinkedPlayerTags([...alreadyLinkedPlayerTags, pendingRequestDetails.playerTag], database);
+	try {
+		const discordUserName = message.author.username;
+		const discordId = message.author.id;
+		// if not found send proper message
+		const pendingVerificationRequestDetailsPromise = await getPendingMappingRequestDetailsData(database);
+		const pendingVerificationRequestDetails = pendingVerificationRequestDetailsPromise.val();
+		if (!pendingVerificationRequestDetails) {
+			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
+		}
+		const pendingRequestsForThisUser = pendingVerificationRequestDetails[discordId];
+		if (!pendingRequestsForThisUser) {
+			return message.reply('Whoops! Looks like you don\'t have any pending verification requests, to initiate a new verification use this command: `!verify [playerTag]`, if you have already requested one please check with admin.');
+		}
+		// if found, trigger a check for the last 10 battles
+		for (const pendingRequests in pendingRequestsForThisUser) {
+			const pendingRequestDetails = pendingRequestsForThisUser[pendingRequests];
+			// if verification passes, update the discord-cracc object, remove from pending verification, send the completed message
+			if (await checkBattleLogsToVerifyPlayer(pendingRequestDetails.playerTag, pendingRequestDetails.deck)) {
+				// TODO do batch or transaction writes
+				const alreadyLinkedPlayerTagsPromise = await getAlreadyLinkedPlayerTags(database);
+				let alreadyLinkedPlayerTags = alreadyLinkedPlayerTagsPromise.val();
+				alreadyLinkedPlayerTags = alreadyLinkedPlayerTags || [];
+				const issetAlreadyLinkedPlayerTagsPersisted = await setAlreadyLinkedPlayerTags([...alreadyLinkedPlayerTags, pendingRequestDetails.playerTag], database);
 
-			const isPendingMappingRequestDetailsDataRemoved = await removePendingMappingRequestDetailsData(pendingRequestDetails.discordId, pendingRequestDetails.playerTag, database);
+				const isPendingMappingRequestDetailsDataRemoved = await removePendingMappingRequestDetailsData(pendingRequestDetails.discordId, pendingRequestDetails.playerTag, database);
 
-			const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
-			const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
-			const isPendingVerificationRequestRemoved = await setPendingVerificationRequests(pendingVerificationRequests.filter(tag => tag != pendingRequestDetails.playerTag), database);
+				const pendingVerificationRequestsPromise = await getPendingVerificationRequests(database);
+				const pendingVerificationRequests = pendingVerificationRequestsPromise.val();
+				const isPendingVerificationRequestRemoved = await setPendingVerificationRequests(pendingVerificationRequests.filter(tag => tag != pendingRequestDetails.playerTag), database);
 
-			// if verification fails, send proper message
-			if (!(isPendingMappingRequestDetailsDataRemoved || issetAlreadyLinkedPlayerTagsPersisted || isPendingVerificationRequestRemoved)) {
-				console.error('verification discord-cr has some bugs, something during completion step didn\'t get persisted');
+				const discordIdToCrAccountsMapPromise = await getDiscordIdToCrAccountsMap(database);
+				const discordIdToCrAccountsMap = discordIdToCrAccountsMapPromise.val();
+				let linkedCrAccountsForThisUser = discordIdToCrAccountsMap ? discordIdToCrAccountsMap[pendingRequestDetails.discordId] : null;
+				linkedCrAccountsForThisUser = linkedCrAccountsForThisUser ? [...linkedCrAccountsForThisUser, pendingRequestDetails.playerTag] : [pendingRequestDetails.playerTag];
+				const isdiscordIdToCrAccountsMapRemoved = await setDiscordIdToCrAccountsMap(pendingRequestDetails.discordId, linkedCrAccountsForThisUser, database);
+
+				// if verification fails, send proper message
+				if (!(isPendingMappingRequestDetailsDataRemoved || issetAlreadyLinkedPlayerTagsPersisted || isPendingVerificationRequestRemoved || isdiscordIdToCrAccountsMapRemoved)) {
+					console.error('verification discord-cr has some bugs, something during completion step didn\'t get persisted');
+				}
+				// TODO send in an embed
+				message.reply(`Player Tag ${pendingRequestDetails.playerTag} is now linked to Discord user ${discordUserName}`);
 			}
-			// TODO send in an embed
-			message.reply(`Player Tag ${pendingRequestDetails.playerTag} is now linked to Discord user ${discordUserName}`);
+			else {
+				message.reply(`Verification failed for Player Tag ${pendingRequestDetails.playerTag}`);
+			}
 		}
-		else {
-			message.reply(`Verification failed for Player Tag ${pendingRequestDetails.playerTag}`);
-		}
+	}
+	catch (error) {
+		console.error(error);
+		console.info('verification discord-cr has some bugs, something during completion step didn\'t get persisted');
 	}
 };
 
