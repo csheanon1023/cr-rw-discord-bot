@@ -3,6 +3,7 @@ const { Client } = require('discord.js');
 const selfRoles = require('./lib/bot-events-helpers/self-roles');
 const warTeamEvents = require('./lib/bot-events-helpers/war-team-helpers');
 const playerVerificationCommand = require('./lib/bot-events-helpers/player-verification-command');
+const upcomingChestsCommand = require('./lib/bot-events-helpers/upcoming-chests-command');
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
@@ -22,6 +23,7 @@ const PREFIX = '$';
 // const CLAN2_CHAT_CHANNEL_ID = '886248413769895987';
 const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
 const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+const LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID = '899384962128707616';
 const CLAN1_ROLE_ID = '873489388338810921';
 const CLAN2_ROLE_ID = '873489468466823218';
 const SELF_ROLE_MESSAGE_ID = '874040719495544862';
@@ -52,6 +54,7 @@ case 'production' :
 		isSendActionDailyUnusedDecksReportEnabled: true,
 		isGenerateEndOfRiverRaceReportEnabled: false,
 		isSendActionEndOfRiverRaceReportEnabled: false,
+		isUpcomingChestsCommandEnabled: false,
 	};
 	break;
 case 'staging':
@@ -65,6 +68,7 @@ case 'staging':
 		isSendActionDailyUnusedDecksReportEnabled: false,
 		isGenerateEndOfRiverRaceReportEnabled: true,
 		isSendActionEndOfRiverRaceReportEnabled: true,
+		isUpcomingChestsCommandEnabled: true,
 	};
 	break;
 case 'dev':
@@ -78,6 +82,7 @@ case 'dev':
 		isSendActionDailyUnusedDecksReportEnabled: true,
 		isGenerateEndOfRiverRaceReportEnabled: true,
 		isSendActionEndOfRiverRaceReportEnabled: true,
+		isUpcomingChestsCommandEnabled: true,
 	};
 	break;
 default:
@@ -91,6 +96,7 @@ default:
 		isSendActionDailyUnusedDecksReportEnabled: false,
 		isGenerateEndOfRiverRaceReportEnabled: false,
 		isSendActionEndOfRiverRaceReportEnabled: false,
+		isUpcomingChestsCommandEnabled: false,
 	};
 }
 
@@ -111,8 +117,13 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isVerifyDiscordCrLinkEnabled && CMD_NAME === 'verify' && message.channel.id === '899384962128707616') {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isVerifyDiscordCrLinkEnabled && CMD_NAME === 'verify' && message.channel.id === LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID) {
 			playerVerificationCommand.verifyPlayerOrFault(message, args, database);
+			return;
+		}
+
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isUpcomingChestsCommandEnabled && CMD_NAME === 'chests' && message.channel.id === '901901247626489917') {
+			upcomingChestsCommand.upcomingChestsOrFault(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
 			return;
 		}
 	}

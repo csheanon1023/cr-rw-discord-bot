@@ -151,7 +151,7 @@ const startNewVerificationFlow = async (message, playerTag, database) => {
 			await message.channel.send(embed);
 		}
 		else {
-			return message.reply('Whoops! Looks like something failed unexpectedly, retries mai not work, please report this to admin');
+			return message.reply('Whoops! Looks like something failed unexpectedly, retries may not work, please report this to admin');
 		}
 		// TODO PLAN garbage collection for images created
 	}
