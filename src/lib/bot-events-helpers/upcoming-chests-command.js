@@ -51,7 +51,7 @@ const getPlayerTagsLinkedToDiscordAccountOrFault = async (message, discordId, da
 	const discordIdToCrAccountsMap = discordIdToCrAccountsMapPromise.val();
 	const linkedCrAccountsForThisUser = discordIdToCrAccountsMap ? discordIdToCrAccountsMap[discordId] : null;
 	if (!linkedCrAccountsForThisUser) {
-		message.reply(`Please go to <#${verificationChannelId}> and run !cr verify to associate your player tags with your Discord account first.`);
+		message.reply(`Please go to <#${verificationChannelId}> and run \`$verify [playerTag]\` to associate your player tags with your Discord account first.`);
 		return false;
 	}
 	return linkedCrAccountsForThisUser;
@@ -59,21 +59,11 @@ const getPlayerTagsLinkedToDiscordAccountOrFault = async (message, discordId, da
 
 const upcomingChestsOrFault = async (message, args, database, verificationChannelId) => {
 	const syntaxObject = {
-		syntax: '$verify [?playerTag]',
-		argumentList: {
-			playerTag: {
-				message: 'tag of the CR account that you want to verify',
-				isOptional: true,
-			},
-		},
+		syntax: '$chests',
 		usages: {
-			initiate: {
-				useCase: 'To initiate verification of your account',
-				syntax: '$verify [playerTag]',
-			},
-			complete: {
-				useCase: 'To complete account verification after using the verification deck in a battle',
-				syntax: '$verify',
+			chests: {
+				useCase: 'To get upcoming chest details for your linked account(s)',
+				syntax: '$chests',
 			},
 		},
 	};
