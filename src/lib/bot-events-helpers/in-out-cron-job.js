@@ -183,7 +183,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
-			if (!(channelIds && channelIds.IN_LOG_CHANNEL_ID)) {
+			if (!(channelIds && channelIds.OUT_LOG_CHANNEL_ID)) {
 				console.log('No channels defined for in-log');
 				return false;
 			}
