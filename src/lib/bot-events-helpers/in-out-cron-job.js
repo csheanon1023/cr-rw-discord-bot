@@ -3,13 +3,17 @@ const membersDataHelper = require('../clash-royale-api-helpers/members-data-help
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
 
-exports.startInOutLogCronEachMinute = (database, client, channelList) => {
+exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 	let clanMembersCache = [];
 	let lastInOutCronSuccessTimestamp = -1;
-	const clanNameByKeyCache = {
-		'#2PYUJUL': 'ROYAL WARRIORS!',
-		'#P9QQVJVG': 'HARAMI_CLASHERS',
+	// const clanNameByKeyCache = {
+	// 	'#2PYUJUL': 'ROYAL WARRIORS!',
+	// 	'#P9QQVJVG': 'HARAMI_CLASHERS',
+	// };
+	const clanCodeByKeyCache = {
+		'#2PYUJUL': 'RW',
+		'#P9QQVJVG': 'HC',
 	};
 
 	// CRON
@@ -37,12 +41,12 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 			const getMemberListPromises = [];
 			clanListCache.forEach(clanTag => getMemberListPromises.push(databaseRepository.getLastKnownMembersListData(clanTag, database)));
 			if (getMemberListPromises.length == 0) {
-				console.log('init clanMembers cache failed, getMembers didn\'t return any promises');
+				console.error('init clanMembers cache failed, getMembers didn\'t return any promises');
 				return;
 			}
 			const clanMembersData = await Promise.all(getMemberListPromises);
 			if (!clanMembersData || clanMembersData.length == 0) {
-				console.log('init clanMembers cache failed, get members data didn\'t get resolved');
+				console.error('init clanMembers cache failed, get members data didn\'t get resolved');
 				return;
 			}
 			clanMembersData.forEach(clanDataSnap => {
@@ -60,34 +64,39 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 		const dirtyMembersClanTag = [];
 		clanListCache.forEach(clan => getMemberListPromises.push(membersDataHelper.getMembers(clan)));
 		if (getMemberListPromises.length == 0) {
-			console.log('find change failed, getMembers didn\'t return any promises');
+			console.error('find change failed, getMembers didn\'t return any promises');
 			return;
 		}
 		const clanMembersData = await Promise.all(getMemberListPromises);
 		if (!clanMembersData || clanMembersData.length == 0) {
-			console.log('find change failed, get members data didn\'t get resolved');
+			console.error('find change failed, get members data didn\'t get resolved');
 			return;
 		}
 		clanMembersData.forEach(clanData => {
 			const clanTag = clanData.request.path.split('/')[3].replace('%23', '#');
-			const mapMemberToCurrentMembersItemForCache = (members) => {
-				return members.map(member => member.tag);
-			};
 			const changeInMemberList = (oldList, newList) => {
 				const diff = (arr1, arr2) => arr1.filter(item => !arr2.includes(item));
 				return { joined: diff(newList, oldList), left: diff(oldList, newList) };
 			};
-			const memberList = mapMemberToCurrentMembersItemForCache(clanData.data.items);
+			const memberList = clanData.data.items.map(member => member.tag);
 			const cachedList = clanMembersCache.find(item => item.clan == clanTag).members;
 			if (!cachedList) {
-				console.log(`failed to find cached members list for clan tag ${clanTag}`);
+				console.error(`failed to find cached members list for clan tag ${clanTag}`);
 				return;
 			}
 			const { joined, left } = changeInMemberList(cachedList, memberList);
 			if (joined.length != 0 || left.length != 0) {
 				console.log(`joined:${joined} \nleft:${left}`);
-				if (joined.length != 0) {joined.forEach(player => sendInOutMessage('Joined', player, clanNameByKeyCache[clanTag]));}
-				if (left.length != 0) {left.forEach(player => sendInOutMessage('Left', player, clanNameByKeyCache[clanTag]));}
+				if (flags.isLegacyInOutLogEnabled) {
+					if (joined.length != 0) {joined.forEach(player => legacySendInOutMessage('Joined', player, clanTag));}
+					if (left.length != 0) {left.forEach(player => legacySendInOutMessage('Left', player, clanTag));}
+				}
+				if (flags.isInLogEnabled) {
+					if (joined.length != 0) {joined.forEach(player => sendInEmbed(player, clanTag));}
+				}
+				if (flags.isOutLogEnabled) {
+					// if (left.length != 0) {left.forEach(player => legacySendInOutMessage('Left', player, clanTag));}
+				}
 				dirtyMembersData.push({
 					members: memberList,
 					clan: clanTag,
@@ -114,18 +123,43 @@ exports.startInOutLogCronEachMinute = (database, client, channelList) => {
 		lastInOutCronSuccessTimestamp = currentTimestamp;
 	});
 
-	const sendInOutMessage = async (change, playerTag, clan) => {
-		if (!playerTag || playerTag == '') {return;}
-		const response = await playerDataHelper.getPlayerData(playerTag);
-		const playerDetails = response.data;
-		if (channelList == null || channelList.length == 0) {
-			console.log('No channels defined for in-out log');
-			return;
+	const legacySendInOutMessage = async (change, playerTag, clan) => {
+		try {
+			if (!playerTag || playerTag == '') {return;}
+			const response = await playerDataHelper.getPlayerData(playerTag);
+			const playerDetails = response.data;
+			if (!(channelIds && channelIds.LEGACY_IN_OUT_LOG_CHANNEL_ID)) {
+				console.log('No channels defined for in-out log');
+				return false;
+			}
+			const channel = await client.channels.fetch(channelIds.LEGACY_IN_OUT_LOG_CHANNEL_ID);
+			channel.send(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
+			console.log(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
 		}
-		for (const channelId of channelList) {
-			const channel = await client.channels.fetch(channelId);
-			channel.send(` [${clan}] This player has ${change}: ${playerDetails.name}.`);
+		catch (error) {
+			console.error('Legacy in-out send message failed\nerror:' + error);
+			console.info(`Params: change:${change};playerTag:${playerTag};clan:${clan}` + error);
+			return false;
 		}
-		console.log(`[${clan}] This player has ${change}: ${playerDetails.name}.`);
+	};
+
+	const sendInEmbed = async (playerTag, clanTag) => {
+		try {
+			if (!playerTag || playerTag == '') {return false;}
+			const response = await playerDataHelper.getPlayerData(playerTag);
+			const playerDetails = response.data;
+			if (!(channelIds && channelIds.IN_LOG_CHANNEL_ID)) {
+				console.log('No channels defined for in-log');
+				return false;
+			}
+			const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
+			channel.send(` [${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has joined: ${playerDetails.name}.`);
+			console.log(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has joined: ${playerDetails.name}.`);
+		}
+		catch (error) {
+			console.error('Legacy in-out send message failed\nerror:' + error);
+			console.info(`Params: change:Join;playerTag:${playerTag};clanTag:${clanTag}` + error);
+			return false;
+		}
 	};
 };
