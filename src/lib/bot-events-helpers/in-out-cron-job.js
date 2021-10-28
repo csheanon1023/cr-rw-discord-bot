@@ -2,6 +2,7 @@ const databaseRepository = require('../database-helpers/database-repository');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
+const { MessageEmbed } = require('discord.js');
 
 exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
@@ -15,6 +16,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 		'#2PYUJUL': 'RW',
 		'#P9QQVJVG': 'HC',
 	};
+	const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 
 	// CRON
 	cron.schedule('* * * * *', async () => {
@@ -95,7 +97,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					if (joined.length != 0) {joined.forEach(player => sendInEmbed(player, clanTag));}
 				}
 				if (flags.isOutLogEnabled) {
-					// if (left.length != 0) {left.forEach(player => legacySendInOutMessage('Left', player, clanTag));}
+					if (left.length != 0) {left.forEach(player => sendOutEmbed(player, clanTag));}
 				}
 				dirtyMembersData.push({
 					members: memberList,
@@ -153,12 +155,58 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				return false;
 			}
 			const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
-			channel.send(` [${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has joined: ${playerDetails.name}.`);
-			console.log(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has joined: ${playerDetails.name}.`);
+			const playerJoinedEmbed = new MessageEmbed()
+				.setColor('#15f501')
+				.setTitle(playerDetails.name || 'Player Name NA')
+				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`)
+				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
+				// .addFields(
+				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
+				// 	{ name: 'Player Tag', value: `${playerTag}`, inline: true },
+				// 	{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
+				// 	{ name: 'Deck', value: deckCardNames, inline: false },
+				// 	// { name: 'Avg. Elixir', value: '3.0', inline: true },
+				// )
+				.setTimestamp();
+			channel.send(playerJoinedEmbed);
+			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`);
 		}
 		catch (error) {
-			console.error('Legacy in-out send message failed\nerror:' + error);
+			console.error('in log send embed failed\nerror:' + error);
 			console.info(`Params: change:Join;playerTag:${playerTag};clanTag:${clanTag}` + error);
+			return false;
+		}
+	};
+
+	const sendOutEmbed = async (playerTag, clanTag) => {
+		try {
+			if (!playerTag || playerTag == '') {return false;}
+			const response = await playerDataHelper.getPlayerData(playerTag);
+			const playerDetails = response.data;
+			if (!(channelIds && channelIds.IN_LOG_CHANNEL_ID)) {
+				console.log('No channels defined for in-log');
+				return false;
+			}
+			const channel = await client.channels.fetch(channelIds.OUT_LOG_CHANNEL_ID);
+			const playerLeftEmbed = new MessageEmbed()
+				.setColor('#15f501')
+				.setTitle(playerDetails.name || 'Player Name NA')
+				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`)
+				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
+				// .addFields(
+				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
+				// 	{ name: 'Player Tag', value: `${playerTag}`, inline: true },
+				// 	{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
+				// 	{ name: 'Deck', value: deckCardNames, inline: false },
+				// 	// { name: 'Avg. Elixir', value: '3.0', inline: true },
+				// )
+				.setTimestamp();
+			channel.send(playerLeftEmbed);
+			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`);
+		}
+		catch (error) {
+			console.error('in log send embed failed\nerror:' + error);
+			console.info(`Params: change:Left;playerTag:${playerTag};clanTag:${clanTag}` + error);
 			return false;
 		}
 	};
