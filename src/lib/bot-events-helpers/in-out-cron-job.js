@@ -135,8 +135,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				return false;
 			}
 			const channel = await client.channels.fetch(channelIds.LEGACY_IN_OUT_LOG_CHANNEL_ID);
-			channel.send(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
-			console.log(`[${clanCodeByKeyCache.clanTag || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
+			channel.send(`[${clanCodeByKeyCache[clan] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
+			console.log(`[${clanCodeByKeyCache[clan] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
 		}
 		catch (error) {
 			console.error('Legacy in-out send message failed\nerror:' + error);
@@ -158,7 +158,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const playerJoinedEmbed = new MessageEmbed()
 				.setColor('#15f501')
 				.setTitle(playerDetails.name || 'Player Name NA')
-				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`)
+				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				// .addFields(
 				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
@@ -169,7 +169,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				// )
 				.setTimestamp();
 			channel.send(playerJoinedEmbed);
-			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`);
+			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
 		}
 		catch (error) {
 			console.error('in log send embed failed\nerror:' + error);
@@ -191,7 +191,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const playerLeftEmbed = new MessageEmbed()
 				.setColor('#15f501')
 				.setTitle(playerDetails.name || 'Player Name NA')
-				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`)
+				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				// .addFields(
 				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
@@ -202,7 +202,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				// )
 				.setTimestamp();
 			channel.send(playerLeftEmbed);
-			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache.clanTag || 'Clan Code NA'}`);
+			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
 		}
 		catch (error) {
 			console.error('in log send embed failed\nerror:' + error);
