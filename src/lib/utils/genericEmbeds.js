@@ -11,14 +11,14 @@ const createSyntaxErrorHelpEmbed = (syntax, argumentList, usages) => {
 	if (syntax)
 		syntaxErrorHelpEmbed.addField('Syntax', `\`\`\`\n${syntax}\n\`\`\``, false);
 
-	if (Object.keys(argumentList).length > 0) {
+	if (argumentList && Object.keys(argumentList).length > 0) {
 		const argumentFieldValues = Object.keys(argumentList).reduce((argumentFieldValuesAccumulator, argument) => {
 			return [...argumentFieldValuesAccumulator, `\`${argument}\` - ${argumentList[argument]?.message} ${argumentList[argument]?.isOptional && '`optional`'}`];
 		}, []);
 		syntaxErrorHelpEmbed.addField('Argument List', argumentFieldValues.join('\n'), false);
 	}
 
-	if (Object.keys(usages).length > 0) {
+	if (usages && Object.keys(usages).length > 0) {
 		const usageFieldValues = Object.keys(usages).reduce((usageFieldValuesAccumulator, usage) => {
 			return [...usageFieldValuesAccumulator, `**${usages[usage]?.useCase}**\n\`\`\`\n${usages[usage]?.syntax}\n\`\`\``];
 		}, []);
