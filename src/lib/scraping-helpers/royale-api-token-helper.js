@@ -20,6 +20,7 @@ const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled = false) => {
 			console.error(`Generate token response status was ${response.status}, Proxy:${isUseProxyEnabled}`);
 			return false;
 		}
+		console.info(`Generate Royale API token passed on proxy: ${isUseProxyEnabled}`);
 		const responseString = await JSON.stringify(response.data);
 		const startIndex = responseString.indexOf('token');
 		const endIndex = responseString.indexOf('\'', startIndex + 10);

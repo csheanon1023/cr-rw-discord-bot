@@ -27,6 +27,7 @@ const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isU
 			console.error(`Get clan war 2 history response status was ${response.status}, Proxy:${isUseProxyEnabled}`);
 			return false;
 		}
+		console.info(`Get CW2 History passed on proxy: ${isUseProxyEnabled}`);
 		return response.data;
 	}
 	catch (error) {
