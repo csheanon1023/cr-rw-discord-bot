@@ -7,7 +7,6 @@ const upcomingChestsCommand = require('./lib/bot-events-helpers/upcoming-chests-
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
-// const royaleApiTokenHelper = require('./lib/scraping-helpers/royale-api-token-helper');
 
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
@@ -145,11 +144,6 @@ client.on('message', async (message) => {
 			upcomingChestsCommand.upcomingChestsOrFault(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
 			return;
 		}
-
-		// if (process.env.ENVIRONMENT_TYPE == 'staging' && CMD_NAME === 'rapitoken' && message.channel.id === '879114632420278284' && message.author.id == '353463252883210240') {
-		// 	royaleApiTokenHelper.generateRoyaleApiToken(message, args);
-		// 	return;
-		// }
 	}
 });
 
