@@ -4,7 +4,7 @@ const axios = require('axios');
 const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 const PROXY_ROYALE_API_BASE_URL = 'https://royaleapi-com-wehanijeych3.curlhub.io/';
 
-const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled) => {
+const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled = false) => {
 	const useURL = isUseProxyEnabled ? PROXY_ROYALE_API_BASE_URL : ROYALE_API_BASE_URL;
 	const config = {
 		method: 'get',
@@ -17,7 +17,7 @@ const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled) => {
 	try {
 		const response = await axios(config);
 		if (response.status != 200) {
-			console.error(`Generate token response status was ${response.status}\n`);
+			console.error(`Generate token response status was ${response.status}, Proxy:${isUseProxyEnabled}`);
 			return false;
 		}
 		const responseString = await JSON.stringify(response.data);
@@ -27,7 +27,7 @@ const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled) => {
 		return token;
 	}
 	catch (error) {
-		console.error(error);
+		console.error(error + `, Proxy:${isUseProxyEnabled}`);
 		return false;
 	}
 };
