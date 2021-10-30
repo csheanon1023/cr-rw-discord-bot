@@ -32,7 +32,11 @@ const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
 const TEST_ROLE_ID = '880484404424753233';
 // const TEST_CHANNEL_ID = '870792677472489515'; // Add this to the array for testing
-const IN_OUT_LOG_CHANNEL_IDS = [ '879119156665016400' ];
+const IN_OUT_LOG_CHANNEL_IDS = {
+	LEGACY_IN_OUT_LOG_CHANNEL_ID: '879119156665016400',
+	IN_LOG_CHANNEL_ID: '903346349892861982',
+	OUT_LOG_CHANNEL_ID: '903345957557633114',
+};
 const CLAN_WISE_CHANNEL_IDS = {
 	'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
 	'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
@@ -49,7 +53,9 @@ case 'production' :
 		isSelfRolesEnabled: true,
 		isByLevelCommandEnabled: true,
 		isVerifyDiscordCrLinkEnabled: false,
-		isInOutLogEnabled: true,
+		isLegacyInOutLogEnabled: true,
+		isInLogEnabled: false,
+		isOutLogEnabled: false,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
@@ -63,7 +69,9 @@ case 'staging':
 		isSelfRolesEnabled: false,
 		isByLevelCommandEnabled: false,
 		isVerifyDiscordCrLinkEnabled: true,
-		isInOutLogEnabled: false,
+		isLegacyInOutLogEnabled: false,
+		isInLogEnabled: true,
+		isOutLogEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: false,
@@ -77,7 +85,9 @@ case 'dev':
 		isSelfRolesEnabled: true,
 		isByLevelCommandEnabled: true,
 		isVerifyDiscordCrLinkEnabled: true,
-		isInOutLogEnabled: true,
+		isLegacyInOutLogEnabled: true,
+		isInLogEnabled: true,
+		isOutLogEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
@@ -91,7 +101,9 @@ default:
 		isSelfRolesEnabled: false,
 		isByLevelCommandEnabled: false,
 		isVerifyDiscordCrLinkEnabled: false,
-		isInOutLogEnabled: false,
+		isLegacyInOutLogEnabled: false,
+		isInLogEnabled: false,
+		isOutLogEnabled: false,
 		isCollectDailyRiverRaceDataEnabled: false,
 		isGenerateDailyUnusedDecksReportEnabled: false,
 		isSendActionDailyUnusedDecksReportEnabled: false,
@@ -100,6 +112,12 @@ default:
 		isUpcomingChestsCommandEnabled: false,
 	};
 }
+
+const IN_OUT_LOGS_FLAG_COLLECTION = {
+	isLegacyInOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isLegacyInOutLogEnabled,
+	isInLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInLogEnabled,
+	isOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isOutLogEnabled,
+};
 
 // Event Handlers
 client.on('ready', () => {
@@ -153,7 +171,7 @@ client.on('messageReactionRemove', (reaction, user) => {
 client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 // Start CRON Jobs
-ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInOutLogEnabled && inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS);
+Object.values(IN_OUT_LOGS_FLAG_COLLECTION).reduce((isEnabled, flag) => isEnabled || flag, false) && inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS, IN_OUT_LOGS_FLAG_COLLECTION);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
