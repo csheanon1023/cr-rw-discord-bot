@@ -6,7 +6,7 @@ const { MessageEmbed } = require('discord.js');
 const royaleApiTokenHelper = require('../scraping-helpers/royale-api-token-helper');
 const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wars2-history-helper');
 
-exports.startInOutLogCronEachMinute = (database, client, channelIds, flags, rApiToken) => {
+exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 	let clanMembersCache = [];
 	let lastInOutCronSuccessTimestamp = -1;
@@ -18,6 +18,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags, rApi
 		'#2PYUJUL': 'RW',
 		'#P9QQVJVG': 'HC',
 	};
+	const rApiToken = null;
 	const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 
 	// CRON
@@ -212,7 +213,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags, rApi
 	};
 
 	const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
-		let clanWar2History = await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName);
+		let clanWar2History = royaleApiToken == null ? false : await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName);
 		if (!clanWar2History) {
 			royaleApiToken =
 				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault() ||
