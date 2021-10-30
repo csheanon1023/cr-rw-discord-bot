@@ -18,7 +18,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 		'#2PYUJUL': 'RW',
 		'#P9QQVJVG': 'HC',
 	};
-	const rApiToken = null;
+	let rApiToken = null;
 	const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 
 	// CRON
@@ -220,6 +220,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true);
 			if (!royaleApiToken)
 				return false;
+			rApiToken = royaleApiToken;
 			clanWar2History =
 				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName) ||
 				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
