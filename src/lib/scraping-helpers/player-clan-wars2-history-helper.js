@@ -2,15 +2,13 @@
 const axios = require('axios');
 
 const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
-// eslint-disable-next-line no-unused-vars
-const PROXY_ROYALE_API_BASE_URL =
-  'https://royaleapi-com-wehanijeych3.curlhub.io/';
+const PROXY_ROYALE_API_BASE_URL = 'https://royaleapi-com-wehanijeych3.curlhub.io/';
 
-const getPlayerClanWar2History = async (token, playerTag, playerName) => {
+const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isUseProxyEnabled) => {
 	const data = `{"player_tag":"${playerTag.substring(
 		1,
 	)}","player_name":"${playerName}","token":"${token}"}`;
-	const useURL = ROYALE_API_BASE_URL;
+	const useURL = isUseProxyEnabled ? PROXY_ROYALE_API_BASE_URL : ROYALE_API_BASE_URL;
 
 	const config = {
 		method: 'post',
@@ -25,23 +23,16 @@ const getPlayerClanWar2History = async (token, playerTag, playerName) => {
 	};
 	try {
 		const response = await axios(config);
-		if (response.status == 200)
-			return response.data;
-		else
+		if (response.status != 200) {
+			console.error(`Get clan war 2 history response status was ${response.status}\n`);
 			return false;
+		}
+		return response.data;
 	}
 	catch (error) {
-		console.log(error);
+		console.error(error);
 		return false;
 	}
 };
 
 module.exports = { getPlayerClanWar2HistoryOrFault };
-(async () => {
-	const token =
-    'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhbGxvdyI6ImluYyIsImV4cCI6MTYzNTM3MTI2MX0.Bcte_NA1JgeKl1FfZqJmW649Pu9VF6hU3B_PFyRfmY8';
-	const playerTag = '#G9VR9LU0';
-	const playerName = 'PRANJAL';
-	const data = await getPlayerClanWar2HistoryOrFault(token, playerTag, playerName);
-	console.log(data);
-})();
