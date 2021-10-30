@@ -3,8 +3,10 @@ const membersDataHelper = require('../clash-royale-api-helpers/members-data-help
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
 const cron = require('node-cron');
 const { MessageEmbed } = require('discord.js');
+const royaleApiTokenHelper = require('../scraping-helpers/royale-api-token-helper');
+const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wars2-history-helper');
 
-exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
+exports.startInOutLogCronEachMinute = (database, client, channelIds, flags, rApiToken) => {
 	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 	let clanMembersCache = [];
 	let lastInOutCronSuccessTimestamp = -1;
@@ -160,14 +162,12 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
-				// .addFields(
-				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
-				// 	{ name: 'Player Tag', value: `${playerTag}`, inline: true },
-				// 	{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
-				// 	{ name: 'Deck', value: deckCardNames, inline: false },
-				// 	// { name: 'Avg. Elixir', value: '3.0', inline: true },
-				// )
 				.setTimestamp();
+
+			const clanWar2History = getClanWars2History(rApiToken, playerTag, playerDetails.name);
+			if (clanWar2History) {
+				playerJoinedEmbed.addField('CW2History', 'True', true);
+			}
 			channel.send(playerJoinedEmbed);
 			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
 		}
@@ -189,7 +189,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			}
 			const channel = await client.channels.fetch(channelIds.OUT_LOG_CHANNEL_ID);
 			const playerLeftEmbed = new MessageEmbed()
-				.setColor('#15f501')
+				.setColor('#ff2203')
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
@@ -209,5 +209,20 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			console.info(`Params: change:Left;playerTag:${playerTag};clanTag:${clanTag}` + error);
 			return false;
 		}
+	};
+
+	const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
+		let clanWar2History = await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName);
+		if (!clanWar2History) {
+			royaleApiToken =
+				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault() ||
+				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true);
+			if (!royaleApiToken)
+				return false;
+			clanWar2History =
+				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName) ||
+				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
+		}
+		return clanWar2History;
 	};
 };

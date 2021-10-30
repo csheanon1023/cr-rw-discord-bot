@@ -4,7 +4,7 @@ const axios = require('axios');
 const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 const PROXY_ROYALE_API_BASE_URL = 'https://royaleapi-com-wehanijeych3.curlhub.io/';
 
-const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isUseProxyEnabled) => {
+const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isUseProxyEnabled = false) => {
 	const data = `{"player_tag":"${playerTag.substring(
 		1,
 	)}","player_name":"${playerName}","token":"${token}"}`;
@@ -24,13 +24,13 @@ const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isU
 	try {
 		const response = await axios(config);
 		if (response.status != 200) {
-			console.error(`Get clan war 2 history response status was ${response.status}\n`);
+			console.error(`Get clan war 2 history response status was ${response.status}, Proxy:${isUseProxyEnabled}`);
 			return false;
 		}
 		return response.data;
 	}
 	catch (error) {
-		console.error(error);
+		console.error(error + `, Proxy:${isUseProxyEnabled}`);
 		return false;
 	}
 };
