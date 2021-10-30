@@ -4,7 +4,7 @@ const axios = require('axios');
 const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 const PROXY_ROYALE_API_BASE_URL = 'https://royaleapi-com-wehanijeych3.curlhub.io/';
 
-const generateRoyaleApiToken = async (isUseProxyEnabled) => {
+const generateRoyaleApiTokenOrFault = async (isUseProxyEnabled) => {
 	const useURL = isUseProxyEnabled ? PROXY_ROYALE_API_BASE_URL : ROYALE_API_BASE_URL;
 	const config = {
 		method: 'get',
@@ -32,4 +32,4 @@ const generateRoyaleApiToken = async (isUseProxyEnabled) => {
 	}
 };
 
-module.exports = { generateRoyaleApiToken };
+module.exports = { generateRoyaleApiTokenOrFault };
