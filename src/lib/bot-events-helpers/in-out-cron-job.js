@@ -167,13 +167,56 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 			const clanWar2History = getClanWars2History(rApiToken, playerTag, playerDetails.name);
 			if (clanWar2History) {
-				playerJoinedEmbed.addField('CW2History', 'True', true);
+				if (!clanWar2History.success || clanWar2History.rows.length == 0) {
+					playerJoinedEmbed.addFields(
+						{ name: 'CW2 History', value: 'NA(0)', inline: false },
+						{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
+						{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
+						{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
+					);
+					console.error(`In log, get clan war 2 history succeeded but success flag is false or data is empty status:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
+				}
+
+				else {
+					// Overall
+					const contributions = clanWar2History.rows.map(raceStats => raceStats.fame || raceStats.contribution);
+					const totalRecordsFound = contributions.length;
+					const totalFame = contributions.reduce((sum, fame) => sum + fame, 0);
+					const overallAverage = Math.ceil(totalFame / totalRecordsFound);
+
+					// Last 10 records
+					const lastTenContributions = contributions.slice(0, 10);
+					const lastTenTotalRecordsFound = lastTenContributions.length;
+					const lastTenTotalFame = lastTenContributions.reduce((sum, fame) => sum + fame, 0);
+					const lastTenOverallAverage = Math.ceil(lastTenTotalFame / lastTenTotalRecordsFound);
+
+					// Best 10 records
+					const bestTenContributions = contributions.slice(0, 10);
+					const bestTenTotalRecordsFound = bestTenContributions.length;
+					const bestTenTotalFame = bestTenContributions.reduce((sum, fame) => sum + fame, 0);
+					const bestTenOverallAverage = Math.ceil(bestTenTotalFame / bestTenTotalRecordsFound);
+
+					// Worst 10 records
+					const worstTenContributions = contributions.slice(0, 10);
+					const worstTenTotalRecordsFound = worstTenContributions.length;
+					const worstTenTotalFame = worstTenContributions.reduce((sum, fame) => sum + fame, 0);
+					const worstTenOverallAverage = Math.ceil(worstTenTotalFame / worstTenTotalRecordsFound);
+
+					if (worstTenTotalRecordsFound.length != 0) {
+						playerJoinedEmbed.addFields(
+							{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: false },
+							{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
+						);
+					}
+				}
 			}
 			channel.send(playerJoinedEmbed);
 			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
 		}
 		catch (error) {
-			console.error('in log send embed failed\nerror:' + error);
+			console.error('In log, send embed failed\nerror:' + error);
 			console.info(`Params: change:Join;playerTag:${playerTag};clanTag:${clanTag}` + error);
 			return false;
 		}
@@ -213,18 +256,25 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	};
 
 	const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
-		let clanWar2History = royaleApiToken == null ? false : await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName);
-		if (!clanWar2History) {
-			royaleApiToken =
-				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault() ||
-				await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true);
-			if (!royaleApiToken)
-				return false;
-			rApiToken = royaleApiToken;
-			clanWar2History =
-				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName) ||
-				await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
+		try {
+
+			let clanWar2History = royaleApiToken == null ? false : await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName);
+			if (!clanWar2History) {
+				royaleApiToken =
+					await royaleApiTokenHelper.generateRoyaleApiTokenOrFault() ||
+					await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true);
+				if (!royaleApiToken)
+					return false;
+				rApiToken = royaleApiToken;
+				clanWar2History =
+					await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName) ||
+					await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
+			}
+			return clanWar2History;
 		}
-		return clanWar2History;
+		catch (error) {
+			console.error(`In log, get clan war 2 history failed \n${error}`);
+			return false;
+		}
 	};
 };
