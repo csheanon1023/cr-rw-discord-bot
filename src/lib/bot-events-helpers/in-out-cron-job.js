@@ -191,13 +191,13 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					const lastTenOverallAverage = Math.ceil(lastTenTotalFame / lastTenTotalRecordsFound);
 
 					// Best 10 records
-					const bestTenContributions = contributions.slice(0, 10);
+					const bestTenContributions = contributions.sort((a, b) => b - a).slice(0, 10);
 					const bestTenTotalRecordsFound = bestTenContributions.length;
 					const bestTenTotalFame = bestTenContributions.reduce((sum, fame) => sum + fame, 0);
 					const bestTenOverallAverage = Math.ceil(bestTenTotalFame / bestTenTotalRecordsFound);
 
 					// Worst 10 records
-					const worstTenContributions = contributions.slice(0, 10);
+					const worstTenContributions = contributions.sort((a, b) => a - b).slice(0, 10);
 					const worstTenTotalRecordsFound = worstTenContributions.length;
 					const worstTenTotalFame = worstTenContributions.reduce((sum, fame) => sum + fame, 0);
 					const worstTenOverallAverage = Math.ceil(worstTenTotalFame / worstTenTotalRecordsFound);
