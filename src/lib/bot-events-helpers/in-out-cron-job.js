@@ -165,7 +165,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
 
-			const clanWar2History = getClanWars2History(rApiToken, playerTag, playerDetails.name);
+			const clanWar2History = await getClanWars2History(rApiToken, playerTag, playerDetails.name);
 			if (clanWar2History) {
 				if (!clanWar2History.success || clanWar2History.rows.length == 0) {
 					playerJoinedEmbed.addFields(
