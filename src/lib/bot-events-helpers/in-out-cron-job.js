@@ -1,3 +1,4 @@
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/in-out-cron-job.js
 const databaseRepository = require('../database-helpers/database-repository');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
