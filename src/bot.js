@@ -50,7 +50,7 @@ switch (process.env.ENVIRONMENT_TYPE) {
 case 'production' :
 	ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {
 		isSelfRolesEnabled: true,
-		isByLevelCommandEnabled: true,
+		isByLevelCommandEnabled: false,
 		isVerifyDiscordCrLinkEnabled: false,
 		isLegacyInOutLogEnabled: true,
 		isInLogEnabled: false,
@@ -66,7 +66,7 @@ case 'production' :
 case 'staging':
 	ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {
 		isSelfRolesEnabled: false,
-		isByLevelCommandEnabled: false,
+		isByLevelCommandEnabled: true,
 		isVerifyDiscordCrLinkEnabled: true,
 		isLegacyInOutLogEnabled: false,
 		isInLogEnabled: true,

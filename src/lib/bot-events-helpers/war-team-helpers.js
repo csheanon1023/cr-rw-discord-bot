@@ -36,7 +36,7 @@ const formatPlayerData = (playerData) => {
 	// Normalize card levels
 	const playerCards = playerData.cards;
 	playerCards.forEach(card => {
-		card.level = card.level + (13 - card.maxLevel);
+		card.level = card.level + (14 - card.maxLevel);
 	});
 
 	// Compute the other cards with the same level as lowest level in top 12 but didn't make the top 12
