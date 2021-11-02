@@ -15,7 +15,7 @@ exports.getMembersByLevel = async (message, args, accessLevel) => {
 	// Validations
 	if (!flag) {return message.reply('Whoops! Looks like you are not authorized to use this command.');}
 	if (args.length != 2) {return message.reply('Please specify clan code and level!');}
-	if (args[1] < 1 || args[1] > 13) {return message.reply('Level should be between 1-13!');}
+	if (args[1] < 1 || args[1] > 14) {return message.reply('Level should be between 1-14!');}
 	if (!Object.keys(clanCodes)?.includes(args[0].toLowerCase())) {return message.reply(`Please check the clan code! Valid codes are ${clanCodes.keys.join(',')}`);}
 
 	// Get and process data
@@ -36,7 +36,7 @@ const formatPlayerData = (playerData) => {
 	// Normalize card levels
 	const playerCards = playerData.cards;
 	playerCards.forEach(card => {
-		card.level = card.level + (13 - card.maxLevel);
+		card.level = card.level + (14 - card.maxLevel);
 	});
 
 	// Compute the other cards with the same level as lowest level in top 12 but didn't make the top 12
@@ -68,5 +68,5 @@ const formatPlayerData = (playerData) => {
 		list.push(`${String(level).padEnd(4)}: ${cards.join(',')}`);
 	});
 
-	return `${firstLine}\n${tableHead}\n${list.join('\n')}\nOther Cards at levle ${lowerLevelCount}: ${otherCardsWithSameLevel.join(',')}`;
+	return `${firstLine}\n${tableHead}\n${list.join('\n')}\nOther Cards at levle ${lowerLevelCount}: ${otherCardsWithSameLevel.join(', ')}`;
 };
