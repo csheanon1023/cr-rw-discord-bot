@@ -19,6 +19,15 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 		'#2PYUJUL': 'RW',
 		'#P9QQVJVG': 'HC',
 	};
+	const embedBannerColours = {
+		COLOUR_ORANGE: '#f56200',
+		COLOUR_RED: '#f52700',
+		COLOUR_YELLOW: '#ca9a00',
+		COLOUR_DULL_GREEN : '#ddf000',
+		COLOUR_BRIGHT_GREEN: '#56f000',
+		COLOUR_PURPLE: '#a114ff',
+		COLOUR_DEFAULT: '#f56200',
+	};
 	let rApiToken = null;
 	const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
 
@@ -160,12 +169,11 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			}
 			const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
 			const playerJoinedEmbed = new MessageEmbed()
-				.setColor('#15f501')
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.addFields(
-					{ name: 'King Level', value: `${playerDetails.expLevel}`, inline: true },
-					{ name: 'Current Trophies', value: `${playerDetails.trophies}`, inline: true },
+					{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
+					{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
 				)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
@@ -173,12 +181,15 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const clanWar2History = await getClanWars2History(rApiToken, playerTag, playerDetails.name);
 			if (clanWar2History) {
 				if (!clanWar2History.success || clanWar2History.rows.length == 0) {
-					playerJoinedEmbed.addFields(
-						{ name: 'CW2 History', value: 'NA(0)', inline: true },
-						{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
-						{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
-						{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
-					);
+					playerJoinedEmbed
+						.setColor(embedBannerColours.COLOUR_ORANGE)
+						.addFields(
+							{ name: 'CW2 History', value: 'NA(0)', inline: true },
+							{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
+							{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
+							{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
+							{ name: 'Recommended action', value: 'We don\'t have enough data on this player to make a prediction.', inline: false },
+						);
 					console.error(`In log, get clan war 2 history succeeded but success flag is false or data is empty status:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
 				}
 
@@ -207,15 +218,51 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					const worstTenTotalFame = worstTenContributions.reduce((sum, fame) => sum + fame, 0);
 					const worstTenOverallAverage = Math.ceil(worstTenTotalFame / worstTenTotalRecordsFound);
 
+					// Find correct banner colour and recommendation message
+					let bannerColour = embedBannerColours.COLOUR_DEFAULT;
+					let recommendationMessage = 'NA';
+					if (lastTenTotalRecordsFound <= 5) {
+						bannerColour = embedBannerColours.COLOUR_ORANGE;
+						recommendationMessage = `We don't have enough data on this player to make a prediction. (Only ${lastTenTotalRecordsFound} records found)`;
+					}
+					else if (lastTenOverallAverage < 800) {
+						bannerColour = embedBannerColours.COLOUR_RED;
+						recommendationMessage = 'CW2 score is too low, player should be kicked out.';
+					}
+					else if (lastTenOverallAverage >= 800 && lastTenOverallAverage < 1400) {
+						bannerColour = embedBannerColours.COLOUR_YELLOW;
+						recommendationMessage = 'Player\'s CW2 score is not very promising, monitor for 1-2 weeks then kick if they are missing battles frequently.';
+					}
+					else if (lastTenOverallAverage >= 1400 && lastTenOverallAverage < 2000) {
+						bannerColour = embedBannerColours.COLOUR_DULL_GREEN;
+						recommendationMessage = 'Decent CW2 score, we should retain the player.';
+					}
+					else if (lastTenOverallAverage >= 2000 && lastTenOverallAverage < 2600) {
+						bannerColour = embedBannerColours.COLOUR_BRIGHT_GREEN;
+						recommendationMessage = 'Very good CW2 history, we should retain the player.';
+					}
+					else {
+						bannerColour = embedBannerColours.COLOUR_PURPLE;
+						recommendationMessage = 'Exceptional CW2 history, expected to boost our clan performance significantly.';
+					}
+
 					if (worstTenTotalRecordsFound.length != 0) {
-						playerJoinedEmbed.addFields(
-							{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
-							{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
-							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
-							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
-						);
+						playerJoinedEmbed
+							.setColor(bannerColour)
+							.addFields(
+								{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
+								{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
+								{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
+								{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
+								{ name: 'Recommended action', value: recommendationMessage, inline: false },
+							);
 					}
 				}
+			}
+			else {
+				playerJoinedEmbed
+					.setColor(embedBannerColours.COLOUR_ORANGE)
+					.addField('Something went wrong', 'Failed to fetch player info, title of this message links to this player\'s profile on RoyaleAPI, click on that to get details about this player', false);
 			}
 			channel.send(playerJoinedEmbed);
 			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
@@ -238,7 +285,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			}
 			const channel = await client.channels.fetch(channelIds.OUT_LOG_CHANNEL_ID);
 			const playerLeftEmbed = new MessageEmbed()
-				.setColor('#ff2203')
+				.setColor(embedBannerColours.COLOUR_RED)
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
