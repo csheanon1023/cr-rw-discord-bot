@@ -15,6 +15,6 @@ exports.getMembers = async (clanTag) => {
 };
 
 exports.getMembersByLevel = (members, level) => {
-	if (level > 0 && level <= 13) {return members.filter(member => member.expLevel == level);}
+	if (level > 0 && level <= 14) {return members.filter(member => member.expLevel == level);}
 	return;
 };
