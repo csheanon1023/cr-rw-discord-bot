@@ -14,7 +14,7 @@ const getPlayerClanWar2HistoryOrFault = async (token, playerTag, playerName, isU
 		method: 'post',
 		url: `${useURL}data/player/cw2_history`,
 		headers: {
-			referer: `${ROYALE_API_BASE_URL}player/${playerName}`,
+			referer: `${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`,
 			'user-agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36',
 			'Content-Type': 'text/plain',

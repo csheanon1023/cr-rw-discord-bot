@@ -1,3 +1,4 @@
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/in-out-cron-job.js
 const databaseRepository = require('../database-helpers/database-repository');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
@@ -162,6 +163,10 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				.setColor('#15f501')
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
+				.addFields(
+					{ name: 'King Level', value: `${playerDetails.expLevel}`, inline: true },
+					{ name: 'Current Trophies', value: `${playerDetails.trophies}`, inline: true },
+				)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
 
@@ -169,7 +174,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			if (clanWar2History) {
 				if (!clanWar2History.success || clanWar2History.rows.length == 0) {
 					playerJoinedEmbed.addFields(
-						{ name: 'CW2 History', value: 'NA(0)', inline: false },
+						{ name: 'CW2 History', value: 'NA(0)', inline: true },
 						{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
 						{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
 						{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
@@ -204,7 +209,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 					if (worstTenTotalRecordsFound.length != 0) {
 						playerJoinedEmbed.addFields(
-							{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: false },
+							{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
