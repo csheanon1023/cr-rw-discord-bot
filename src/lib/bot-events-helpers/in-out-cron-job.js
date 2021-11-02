@@ -246,17 +246,15 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 						recommendationMessage = 'Exceptional CW2 history, expected to boost our clan performance significantly.';
 					}
 
-					if (worstTenTotalRecordsFound.length != 0) {
-						playerJoinedEmbed
-							.setColor(bannerColour)
-							.addFields(
-								{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
-								{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
-								{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
-								{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
-								{ name: 'Recommended action', value: recommendationMessage, inline: false },
-							);
-					}
+					playerJoinedEmbed
+						.setColor(bannerColour)
+						.addFields(
+							{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
+							{ name: 'Recommended action', value: recommendationMessage, inline: false },
+						);
 				}
 			}
 			else {
