@@ -50,11 +50,11 @@ switch (process.env.ENVIRONMENT_TYPE) {
 case 'production' :
 	ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {
 		isSelfRolesEnabled: true,
-		isByLevelCommandEnabled: false,
+		isByLevelCommandEnabled: true,
 		isVerifyDiscordCrLinkEnabled: false,
 		isLegacyInOutLogEnabled: true,
-		isInLogEnabled: false,
-		isOutLogEnabled: false,
+		isInLogEnabled: true,
+		isOutLogEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
@@ -66,11 +66,11 @@ case 'production' :
 case 'staging':
 	ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {
 		isSelfRolesEnabled: false,
-		isByLevelCommandEnabled: true,
+		isByLevelCommandEnabled: false,
 		isVerifyDiscordCrLinkEnabled: true,
 		isLegacyInOutLogEnabled: false,
-		isInLogEnabled: true,
-		isOutLogEnabled: true,
+		isInLogEnabled: false,
+		isOutLogEnabled: false,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: false,
