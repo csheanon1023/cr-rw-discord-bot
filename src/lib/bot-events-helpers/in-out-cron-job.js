@@ -289,13 +289,6 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				.setTitle(playerDetails.name || 'Player Name NA')
 				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
-				// .addFields(
-				// 	{ name: 'Discord User', value: `${discordUserName}`, inline: true },
-				// 	{ name: 'Player Tag', value: `${playerTag}`, inline: true },
-				// 	{ name: 'Deck Link', value: `[Copy Deck](${deckLink})`, inline: true },
-				// 	{ name: 'Deck', value: deckCardNames, inline: false },
-				// 	// { name: 'Avg. Elixir', value: '3.0', inline: true },
-				// )
 				.setTimestamp();
 			channel.send(playerLeftEmbed);
 			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
