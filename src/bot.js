@@ -55,6 +55,7 @@ case 'production' :
 		isLegacyInOutLogEnabled: true,
 		isInLogEnabled: true,
 		isOutLogEnabled: true,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
@@ -71,6 +72,7 @@ case 'staging':
 		isLegacyInOutLogEnabled: false,
 		isInLogEnabled: false,
 		isOutLogEnabled: false,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: false,
@@ -87,6 +89,7 @@ case 'dev':
 		isLegacyInOutLogEnabled: true,
 		isInLogEnabled: true,
 		isOutLogEnabled: true,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
@@ -103,6 +106,7 @@ default:
 		isLegacyInOutLogEnabled: false,
 		isInLogEnabled: false,
 		isOutLogEnabled: false,
+		isInOutLogsComputationEnabled: false,
 		isCollectDailyRiverRaceDataEnabled: false,
 		isGenerateDailyUnusedDecksReportEnabled: false,
 		isSendActionDailyUnusedDecksReportEnabled: false,
@@ -116,6 +120,7 @@ const IN_OUT_LOGS_FLAG_COLLECTION = {
 	isLegacyInOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isLegacyInOutLogEnabled,
 	isInLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInLogEnabled,
 	isOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isOutLogEnabled,
+	isInOutLogsComputationEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInOutLogsComputationEnabled,
 };
 
 // Event Handlers
