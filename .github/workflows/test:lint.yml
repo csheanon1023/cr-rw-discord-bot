@@ -4,6 +4,7 @@ on:
     branches:
       - '*'
       - '!staging'
+      - '!main'
 jobs:
   lint:
     name: ESLint

@@ -169,8 +169,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			}
 			const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
 			const playerJoinedEmbed = new MessageEmbed()
-				.setTitle(playerDetails.name || 'Player Name NA')
-				.setDescription(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
+				.setTitle(`${clanCodeByKeyCache[clanTag] || 'Clan Code NA'} ${playerDetails.name || 'Player Name NA'}`)
 				.addFields(
 					{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
 					{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
