@@ -283,8 +283,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const channel = await client.channels.fetch(channelIds.OUT_LOG_CHANNEL_ID);
 			const playerLeftEmbed = new MessageEmbed()
 				.setColor(embedBannerColours.COLOUR_RED)
-				.setTitle(playerDetails.name || 'Player Name NA')
-				.setDescription(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`)
+				.setTitle(`[${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
 			channel.send(playerLeftEmbed);
