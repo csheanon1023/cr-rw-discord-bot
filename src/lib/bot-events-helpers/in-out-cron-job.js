@@ -160,14 +160,16 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 	const sendInEmbed = async (playerTag, clanTag) => {
 		try {
+			const baseChannelIdKey = 'IN_LOG_CHANNEL_ID';
+			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag]}`;
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
-			if (!(channelIds && channelIds.IN_LOG_CHANNEL_ID)) {
+			if (!(channelIds && channelIds[channelIdKey])) {
 				console.log('No channels defined for in-log');
 				return false;
 			}
-			const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
+			const channel = await client.channels.fetch(channelIds[channelIdKey]);
 			const playerJoinedEmbed = new MessageEmbed()
 				.setTitle(`[${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
 				.addFields(
@@ -273,14 +275,16 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 	const sendOutEmbed = async (playerTag, clanTag) => {
 		try {
+			const baseChannelIdKey = 'IN_LOG_CHANNEL_ID';
+			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag]}`;
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
-			if (!(channelIds && channelIds.OUT_LOG_CHANNEL_ID)) {
+			if (!(channelIds && channelIds[channelIdKey])) {
 				console.log('No channels defined for in-log');
 				return false;
 			}
-			const channel = await client.channels.fetch(channelIds.OUT_LOG_CHANNEL_ID);
+			const channel = await client.channels.fetch(channelIds[channelIdKey]);
 			const playerLeftEmbed = new MessageEmbed()
 				.setColor(embedBannerColours.COLOUR_RED)
 				.setTitle(`[${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
