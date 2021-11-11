@@ -106,8 +106,6 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 			try {
 				// TODO get from DB
 				let clanToKickPlayerTagsByClan = toKickPlayerTagsByClan[clanTag.substring(1)];
-				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
-					continue;
 				const clanKickingTeamMemberPendingKicks = kickingTeamMemberPendingKicks[clanTag?.substring(1)];
 
 				// get the current clan members and check against that
@@ -118,6 +116,8 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 					if (!clanMemberList.includes(`#${playerTag}`))
 						delete clanKickingTeamMemberPendingKicks[playerTag];
 				}
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 
 				// check in kicking team member pending kicks list if not assigned, add assignment
 				for (const playerTag of clanToKickPlayerTagsByClan) {
