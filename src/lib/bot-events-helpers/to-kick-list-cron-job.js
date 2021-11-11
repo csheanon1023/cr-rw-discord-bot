@@ -104,20 +104,22 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 		}, {});
 		for (const clanTag of clanListCache) {
 			try {
-				// TODO get from DB
+				// TODO place null check in correct place
 				let clanToKickPlayerTagsByClan = toKickPlayerTagsByClan[clanTag.substring(1)];
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 				const clanKickingTeamMemberPendingKicks = kickingTeamMemberPendingKicks[clanTag?.substring(1)];
 
 				// get the current clan members and check against that
 				const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 				const clanMemberList = memberListData.items.map(({ tag }) => tag);
 				clanToKickPlayerTagsByClan = clanToKickPlayerTagsByClan?.filter(playerTag => clanMemberList.includes(playerTag));
 				for (const playerTag in clanKickingTeamMemberPendingKicks) {
 					if (!clanMemberList.includes(`#${playerTag}`))
 						delete clanKickingTeamMemberPendingKicks[playerTag];
 				}
-				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
-					continue;
 
 				// check in kicking team member pending kicks list if not assigned, add assignment
 				for (const playerTag of clanToKickPlayerTagsByClan) {
