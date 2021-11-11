@@ -86,19 +86,19 @@ case 'staging':
 	break;
 case 'dev':
 	ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {
-		isSelfRolesEnabled: true,
-		isByLevelCommandEnabled: true,
-		isVerifyDiscordCrLinkEnabled: true,
-		isLegacyInOutLogEnabled: true,
-		isInLogEnabled: true,
-		isOutLogEnabled: true,
-		isInOutLogsComputationEnabled: true,
-		isCollectDailyRiverRaceDataEnabled: true,
-		isGenerateDailyUnusedDecksReportEnabled: true,
-		isSendActionDailyUnusedDecksReportEnabled: true,
-		isGenerateEndOfRiverRaceReportEnabled: true,
-		isSendActionEndOfRiverRaceReportEnabled: true,
-		isUpcomingChestsCommandEnabled: true,
+		isSelfRolesEnabled: false,
+		isByLevelCommandEnabled: false,
+		isVerifyDiscordCrLinkEnabled: false,
+		isLegacyInOutLogEnabled: false,
+		isInLogEnabled: false,
+		isOutLogEnabled: false,
+		isInOutLogsComputationEnabled: false,
+		isCollectDailyRiverRaceDataEnabled: false,
+		isGenerateDailyUnusedDecksReportEnabled: false,
+		isSendActionDailyUnusedDecksReportEnabled: false,
+		isGenerateEndOfRiverRaceReportEnabled: false,
+		isSendActionEndOfRiverRaceReportEnabled: false,
+		isUpcomingChestsCommandEnabled: false,
 		isToKickListCronEnabled: true,
 	};
 	break;

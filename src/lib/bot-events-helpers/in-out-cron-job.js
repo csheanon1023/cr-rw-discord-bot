@@ -227,6 +227,14 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					else if (lastTenOverallAverage < 800) {
 						bannerColour = embedBannerColours.COLOUR_RED;
 						recommendationMessage = 'CW2 score is too low, player should be kicked out.';
+						databaseRepository.getToKickPlayerTagsByClan(database).then(data => {
+							let toKickListData = data.val();
+							if (toKickListData && toKickListData.length !== 0)
+								toKickListData = [...toKickListData, playerTag];
+							else
+								toKickListData = [ playerTag ];
+							databaseRepository.setToKickPlayerTagsByClan(clanTag, toKickListData, database);
+						}).catch(error => console.error(`[IN-LOG] Something went wrong while saving kick list data. \nerror: ${error}`));
 					}
 					else if (lastTenOverallAverage >= 800 && lastTenOverallAverage < 1400) {
 						bannerColour = embedBannerColours.COLOUR_YELLOW;

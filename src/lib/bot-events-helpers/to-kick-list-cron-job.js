@@ -131,7 +131,7 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 					setToKickPlayerTagsByClan(clanTag, clanToKickPlayerTagsByClan, database),
 					setkickingTeamMemberPendingKicksData(clanTag, clanToKickPlayerTagsByClan, database),
 				]).then(() => console.log('Kick list data saved to DB'))
-					.catch((error) => console.error(`Something went wrong while saving kick list data. \nerror: ${error}`));
+					.catch(error => console.error(`Something went wrong while saving kick list data. \nerror: ${error}`));
 
 				// update|send the embed
 				const clanKickBoardEmbed = new MessageEmbed()
