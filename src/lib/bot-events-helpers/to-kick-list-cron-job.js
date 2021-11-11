@@ -1,8 +1,32 @@
 // to run script: node -r dotenv/config ./src/lib/bot-events-helpers/to-kick-list-cron-job.js
 const { MessageEmbed } = require('discord.js');
-const databaseRepository = require('../database-helpers/database-repository');
+const {
+	getToKickPlayerTagsByClan,
+	setToKickPlayerTagsByClan,
+	getkickingTeamMemberPendingKicksData,
+	setkickingTeamMemberPendingKicksData,
+} = require('../database-helpers/database-repository');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const cron = require('node-cron');
+
+// TODO add these to DB as well
+const clanTeams = {
+	'2PYUJUL': {
+		'kicking': ['#YV9JQYP08', '#LVUY02VGR', '#2G829C8P'],
+		'boat': ['#22QUVQPGQ', '#GQPQGUYJ2', '#2G829C8P'],
+		'promotions': ['#8RL8C9YCJ', '#Q0JJ99GYY', '#2G829C8P'],
+	},
+	'P9QQVJVG': {
+		'kicking': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
+		'boat': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
+		'promotions': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
+	},
+};
+
+const onLeaveMembersByClan = {
+	'2PYUJUL': [],
+	'P9QQVJVG': [],
+};
 
 const messageEmbedByClan = {
 	'2PYUJUL': {
@@ -45,45 +69,40 @@ const clanCodeByKeyCache = {
 // 	},
 // };
 
-const toKickPlayerTagsByClan = {
-	'2PYUJUL': ['#PQVV898P2', '#Y2L220RLY', '#GVQGRL9U', '#8RL8C9YCJ', '#89J2L80LQ', '#GYUQV0J2J', '#YV9JQYP08'],
-	'P9QQVJVG': ['#2VYURJ08', '#RGUJ000Q8', '#YL9YY9Y8', '#LLQJ20UQV', '#LQ08VURJG', '#PYU0YQVYJ'],
-};
+// const toKickPlayerTagsByClan = {
+// 	'2PYUJUL': ['#PQVV898P2', '#Y2L220RLY', '#GVQGRL9U', '#8RL8C9YCJ', '#89J2L80LQ', '#GYUQV0J2J', '#YV9JQYP08'],
+// 	'P9QQVJVG': ['#2VYURJ08', '#RGUJ000Q8', '#YL9YY9Y8', '#LLQJ20UQV', '#LQ08VURJG', '#PYU0YQVYJ'],
+// };
 
-const kickingTeamMemberPendingKicks = {
-	'2PYUJUL' : {
-		// 'PQVV898P2': '#YV9JQYP08',
-		// 'U80J98P2': '#YV9JQYP08',
-		// 'YV9JQYP08': '#YV9JQYP08',
-		// '22QUVQPGQ': '#LVUY02VGR',
-	},
-	'P9QQVJVG' : {
-		// '9UVRC9LC0': '#G9VR9LU0',
-		// '99VUQP2VJ': '#RY9P8P0PJ',
-		// 'QQ0GJ8UPV': '#RY9P8P0PJ',
-		// 'RR9YVJRUG': '#G9VR9LU0',
-	},
-};
-
-const clanTeams = {
-	'2PYUJUL': {
-		'kicking': ['#YV9JQYP08', '#LVUY02VGR', '#2G829C8P'],
-		'boat': ['#22QUVQPGQ', '#GQPQGUYJ2', '#2G829C8P'],
-		'promotions': ['#8RL8C9YCJ', '#Q0JJ99GYY', '#2G829C8P'],
-	},
-	'P9QQVJVG': {
-		'kicking': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
-		'boat': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
-		'promotions': ['#RY9P8P0PJ', '#QCULVGQQR', '#G9VR9LU0'],
-	},
-};
-
-const onLeaveMembersByClan = [];
+// const kickingTeamMemberPendingKicks = {
+// 	'2PYUJUL' : {
+// 		// 'PQVV898P2': '#YV9JQYP08',
+// 		// 'U80J98P2': '#YV9JQYP08',
+// 		// 'YV9JQYP08': '#YV9JQYP08',
+// 		// '22QUVQPGQ': '#LVUY02VGR',
+// 	},
+// 	'P9QQVJVG' : {
+// 		// '9UVRC9LC0': '#G9VR9LU0',
+// 		// '99VUQP2VJ': '#RY9P8P0PJ',
+// 		// 'QQ0GJ8UPV': '#RY9P8P0PJ',
+// 		// 'RR9YVJRUG': '#G9VR9LU0',
+// 	},
+// };
 
 const scheduleCronToRefreshKickingBoardData = (database, client) => {
 	// At every 5th minute [offset 15]
 	// cron.schedule('15 */5 * * * *', async () => {
 	cron.schedule('15,30,45 * * * * *', async () => {
+		const toKickPlayerTagsByClan = (await getToKickPlayerTagsByClan()).val() ||
+		clanListCache.reduce((emptyStructure, clanTag) => {
+			emptyStructure[clanTag.substring(1)] = [];
+			return emptyStructure;
+		}, {});
+		const kickingTeamMemberPendingKicks = (await getkickingTeamMemberPendingKicksData()).val() ||
+		clanListCache.reduce((emptyStructure, clanTag) => {
+			emptyStructure[clanTag.substring(1)] = {};
+			return emptyStructure;
+		}, {});
 		for (const clanTag of clanListCache) {
 			try {
 				// TODO get from DB
@@ -93,23 +112,26 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 				// get the current clan members and check against that
 				const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
 				const clanMemberList = memberListData.items.map(({ tag }) => tag);
-				clanToKickPlayerTagsByClan = clanToKickPlayerTagsByClan.filter(playerTag => clanMemberList.includes(playerTag));
-				Object.keys(clanKickingTeamMemberPendingKicks).forEach(playerTag => {
+				clanToKickPlayerTagsByClan = clanToKickPlayerTagsByClan?.filter(playerTag => clanMemberList.includes(playerTag));
+				for (const playerTag in clanKickingTeamMemberPendingKicks) {
 					if (!clanMemberList.includes(`#${playerTag}`))
 						delete clanKickingTeamMemberPendingKicks[playerTag];
-				});
-				clanToKickPlayerTagsByClan = clanToKickPlayerTagsByClan.filter(playerTag => clanMemberList.includes(playerTag));
+				}
 
 				// check in kicking team member pending kicks list if not assigned, add assignment
 				for (const playerTag of clanToKickPlayerTagsByClan) {
 					if (Object.hasOwnProperty.call(clanKickingTeamMemberPendingKicks, playerTag?.substring(1)))
 						continue;
-					const randomlyAssignedTeamMember = await findRandomTeamMemberToAssign(clanTeams?.[clanTag?.substring(1)]?.['kicking'] || [], memberListData.items);
+					const randomlyAssignedTeamMember = await findRandomTeamMemberToAssign(clanTeams?.[clanTag?.substring(1)]?.['kicking'] || [], memberListData.items, clanTag);
 					clanKickingTeamMemberPendingKicks[playerTag?.substring(1)] = randomlyAssignedTeamMember;
 				}
 
 				// update the DB
-
+				Promise.all([
+					setToKickPlayerTagsByClan(clanTag, clanToKickPlayerTagsByClan, database),
+					setkickingTeamMemberPendingKicksData(clanTag, clanToKickPlayerTagsByClan, database),
+				]).then(() => console.log('Kick list data saved to DB'))
+					.catch((error) => console.error(`Something went wrong while saving kick list data. \nerror: ${error}`));
 
 				// update|send the embed
 				const clanKickBoardEmbed = new MessageEmbed()
@@ -169,16 +191,16 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 	});
 };
 
-const findRandomTeamMemberToAssign = async (teamMembersTags, currentMemberList) => {
+const findRandomTeamMemberToAssign = async (teamMembersTags, currentMemberList, clanTag) => {
 	try {
-		if (teamMembersTags?.length == 0) {
+		if (teamMembersTags && teamMembersTags?.length == 0) {
 			return currentMemberList?.find(member => member.role == 'leader')?.tag;
 		}
 		// TODO get members on leave
 		let filteredTeamMembersTags = [];
-		if (onLeaveMembersByClan?.length != 0)
-			filteredTeamMembersTags = teamMembersTags.filter(teamMemberTag => !onLeaveMembersByClan.includes(teamMemberTag));
-		if (filteredTeamMembersTags?.length == 0)
+		if (onLeaveMembersByClan?.[clanTag.substring(1)]?.length != 0)
+			filteredTeamMembersTags = teamMembersTags.filter(teamMemberTag => !onLeaveMembersByClan?.[clanTag.substring(1)]?.includes(teamMemberTag));
+		if (filteredTeamMembersTags && filteredTeamMembersTags?.length == 0)
 			return teamMembersTags[Math.floor((Math.random() * 100) % teamMembersTags.length)];
 		return filteredTeamMembersTags[Math.floor((Math.random() * 100) % filteredTeamMembersTags.length)];
 	}
@@ -189,12 +211,3 @@ const findRandomTeamMemberToAssign = async (teamMembersTags, currentMemberList) 
 };
 
 module.exports = { scheduleCronToRefreshKickingBoardData };
-// const { Client } = require('discord.js');
-
-// (async () => {
-// 	const client = new Client({
-// 		partials: ['MESSAGE', 'REACTION'],
-// 	});
-// 	await client.login(process.env.DISCORDJS_BOT_TOKEN);
-// 	scheduleCronToRefreshKickingBoardData(null, client);
-// })();
