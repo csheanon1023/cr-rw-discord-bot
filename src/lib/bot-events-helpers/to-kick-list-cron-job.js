@@ -132,7 +132,7 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 				// update the DB
 				Promise.all([
 					setToKickPlayerTagsByClan(clanTag, clanToKickPlayerTagsByClan, database),
-					setkickingTeamMemberPendingKicksData(clanTag, clanToKickPlayerTagsByClan, database),
+					setkickingTeamMemberPendingKicksData(clanTag, clanKickingTeamMemberPendingKicks, database),
 				]).then(() => console.log('Kick list data saved to DB'))
 					.catch(error => console.error(`Something went wrong while saving kick list data. \nerror: ${error}`));
 
