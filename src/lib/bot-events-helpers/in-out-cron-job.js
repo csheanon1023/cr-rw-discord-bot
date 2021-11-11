@@ -161,7 +161,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const sendInEmbed = async (playerTag, clanTag) => {
 		try {
 			const baseChannelIdKey = 'IN_LOG_CHANNEL_ID';
-			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag]}`;
+			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag.substring(1)]}`;
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
@@ -284,12 +284,12 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const sendOutEmbed = async (playerTag, clanTag) => {
 		try {
 			const baseChannelIdKey = 'OUT_LOG_CHANNEL_ID';
-			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag]}`;
+			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[.substring(1)]}`;
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
 			if (!(channelIds && channelIds[channelIdKey])) {
-				console.log('No channels defined for in-log');
+				console.log('No channels defined for out-log');
 				return false;
 			}
 			const channel = await client.channels.fetch(channelIds[channelIdKey]);
