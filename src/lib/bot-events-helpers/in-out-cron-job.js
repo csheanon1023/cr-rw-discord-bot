@@ -284,7 +284,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const sendOutEmbed = async (playerTag, clanTag) => {
 		try {
 			const baseChannelIdKey = 'OUT_LOG_CHANNEL_ID';
-			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[.substring(1)]}`;
+			const channelIdKey = `${baseChannelIdKey}_${clanCodeByKeyCache[clanTag.substring(1)]}`;
 			if (!playerTag || playerTag == '') {return false;}
 			const response = await playerDataHelper.getPlayerData(playerTag);
 			const playerDetails = response.data;
