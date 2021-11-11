@@ -38,7 +38,7 @@ const scheduleCronToCollectRiverRaceData = (database) => {
 
 		try {
 			const currentRiverRaceData = await Promise.all(clanListCache.map(clan => currentRiverRaceDataHelper.getCurrentRiverRaceData(clan)));
-			currentRiverRaceData.forEach(({ data }) => {
+			for (const { data } of currentRiverRaceData) {
 				const clanRiverRaceDataSnap = {};
 				if (data?.periodIndex % 7 != currentRiverRacePeriodIndex) {
 					console.log(`${formattedCurrentTime} Skipping river race data collection for ${data?.clan?.tag}, periodIndex value was unexpected`);
@@ -49,9 +49,11 @@ const scheduleCronToCollectRiverRaceData = (database) => {
 					periodLogs: data.periodLogs,
 					timestamp: currentDate.getTime(),
 				};
-				const isDataSnapSavedSuccessfully = databaseRepository.setLastKnownBattleDayData(clanRiverRaceDataSnap, database);
-				isRiverRaceDataSnapSaved[data?.clan?.tag] = isDataSnapSavedSuccessfully;
-			});
+				if (clanRiverRaceDataSnap && Object.keys(clanRiverRaceDataSnap).length !== 0) {
+					const isDataSnapSavedSuccessfully = await databaseRepository.setLastKnownBattleDayData(clanRiverRaceDataSnap, database);
+					isRiverRaceDataSnapSaved[data?.clan?.tag] = isDataSnapSavedSuccessfully;
+				}
+			}
 		}
 		catch (e) {
 			console.error(e);

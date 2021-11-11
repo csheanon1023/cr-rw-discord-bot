@@ -16,8 +16,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	// 	'#P9QQVJVG': 'HARAMI_CLASHERS',
 	// };
 	const clanCodeByKeyCache = {
-		'#2PYUJUL': 'RW',
-		'#P9QQVJVG': 'HC',
+		'2PYUJUL': 'RW',
+		'P9QQVJVG': 'HC',
 	};
 	const embedBannerColours = {
 		COLOUR_ORANGE: '#f56200',
@@ -148,8 +148,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 				return false;
 			}
 			const channel = await client.channels.fetch(channelIds.LEGACY_IN_OUT_LOG_CHANNEL_ID);
-			channel.send(`[${clanCodeByKeyCache[clan] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
-			console.log(`[${clanCodeByKeyCache[clan] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
+			channel.send(`[${clanCodeByKeyCache[clan.substring(1)] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
+			console.log(`[${clanCodeByKeyCache[clan.substring(1)] || 'Clan Code NA'}] This player has ${change}: ${playerDetails.name}.`);
 		}
 		catch (error) {
 			console.error('Legacy in-out send message failed\nerror:' + error);
@@ -171,7 +171,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			}
 			const channel = await client.channels.fetch(channelIds[channelIdKey]);
 			const playerJoinedEmbed = new MessageEmbed()
-				.setTitle(`[${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
+				.setTitle(`[${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
 				.addFields(
 					{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
 					{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
@@ -229,6 +229,14 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					else if (lastTenOverallAverage < 800) {
 						bannerColour = embedBannerColours.COLOUR_RED;
 						recommendationMessage = 'CW2 score is too low, player should be kicked out.';
+						databaseRepository.getToKickPlayerTagsByClan(database).then(data => {
+							let toKickListData = data.val();
+							if (toKickListData && toKickListData.length !== 0)
+								toKickListData = [...toKickListData, playerTag];
+							else
+								toKickListData = [ playerTag ];
+							databaseRepository.setToKickPlayerTagsByClan(clanTag, toKickListData, database);
+						}).catch(error => console.error(`[IN-LOG] Something went wrong while saving kick list data. \nerror: ${error}`));
 					}
 					else if (lastTenOverallAverage >= 800 && lastTenOverallAverage < 1400) {
 						bannerColour = embedBannerColours.COLOUR_YELLOW;
@@ -264,7 +272,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					.addField('Something went wrong', 'Failed to fetch player info, title of this message links to this player\'s profile on RoyaleAPI, click on that to get details about this player', false);
 			}
 			channel.send(playerJoinedEmbed);
-			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
+			console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}`);
 		}
 		catch (error) {
 			console.error('In log, send embed failed\nerror:' + error);
@@ -287,11 +295,11 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const channel = await client.channels.fetch(channelIds[channelIdKey]);
 			const playerLeftEmbed = new MessageEmbed()
 				.setColor(embedBannerColours.COLOUR_RED)
-				.setTitle(`[${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
+				.setTitle(`[${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
 			channel.send(playerLeftEmbed);
-			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag] || 'Clan Code NA'}`);
+			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}`);
 		}
 		catch (error) {
 			console.error('in log send embed failed\nerror:' + error);

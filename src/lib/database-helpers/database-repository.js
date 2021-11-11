@@ -14,6 +14,8 @@ const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-reques
 const DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT = 'already-linked-player-tags';
 const DB_KEY_PENDING_MAPPING_REQUEST_DETAILS_OBJECT = 'pending-mapping-request-details';
 const DB_KEY_DISCORD_ID_TO_CR_ACCOUNTS_MAP_OBJECT = 'discord-id-to-cr-accounts-map';
+const DB_KEY_TO_KICK_PLAYER_TAGS_BY_CLAN_OBJECT = 'to-kick-player-tags-by-clan';
+const DB_KEY_KICKING_TEAM_MEMBER_PENDING_KICKS_OBJECT = 'kicking-team-member-pending-kicks';
 
 const connectRealtimeDatabase = () => {
 	admin.initializeApp({
@@ -179,6 +181,44 @@ const removePendingMappingRequestDetailsData = (discordId, playerTag, database) 
 		});
 };
 
+// to-kick-player-tags-by-clan
+const getToKickPlayerTagsByClan = (database) => {
+	return database.ref(`/${DB_KEY_TO_KICK_PLAYER_TAGS_BY_CLAN_OBJECT}`).once('value');
+};
+
+const setToKickPlayerTagsByClan = (clanTag, playerTags, database) => {
+	return database.ref(`/${DB_KEY_TO_KICK_PLAYER_TAGS_BY_CLAN_OBJECT}/${clanTag.substring(1)}`).set(playerTags)
+		.then(() => {
+			console.log('Data saved successfully.');
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
+};
+
+// kicking-team-member-pending-kicks
+const getkickingTeamMemberPendingKicksData = (database) => {
+	return database.ref(`/${DB_KEY_KICKING_TEAM_MEMBER_PENDING_KICKS_OBJECT}`).once('value');
+};
+
+const getkickingTeamMemberPendingKicksByClanData = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_KICKING_TEAM_MEMBER_PENDING_KICKS_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+const setkickingTeamMemberPendingKicksData = (clanTag, data, database) => {
+	return database.ref(`/${DB_KEY_KICKING_TEAM_MEMBER_PENDING_KICKS_OBJECT}/${clanTag.substring(1)}`).set(data)
+		.then(() => {
+			console.log('Data saved successfully.');
+			return true;
+		})
+		.catch(error => {
+			console.log('Data could not be saved.' + error);
+			return false;
+		});
+};
+
 module.exports = {
 	connectRealtimeDatabase,
 	getLastKnownMembersListData,
@@ -198,4 +238,9 @@ module.exports = {
 	getPendingMappingRequestDetailsData,
 	setPendingMappingRequestDetailsData,
 	removePendingMappingRequestDetailsData,
+	getToKickPlayerTagsByClan,
+	setToKickPlayerTagsByClan,
+	getkickingTeamMemberPendingKicksByClanData,
+	getkickingTeamMemberPendingKicksData,
+	setkickingTeamMemberPendingKicksData,
 };
