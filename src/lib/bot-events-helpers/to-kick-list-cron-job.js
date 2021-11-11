@@ -91,14 +91,13 @@ const clanCodeByKeyCache = {
 
 const scheduleCronToRefreshKickingBoardData = (database, client) => {
 	// At every 5th minute [offset 15]
-	// cron.schedule('15 */5 * * * *', async () => {
-	cron.schedule('15,30,45 * * * * *', async () => {
-		const toKickPlayerTagsByClan = (await getToKickPlayerTagsByClan()).val() ||
+	cron.schedule('15 */5 * * * *', async () => {
+		const toKickPlayerTagsByClan = (await getToKickPlayerTagsByClan(database)).val() ||
 		clanListCache.reduce((emptyStructure, clanTag) => {
 			emptyStructure[clanTag.substring(1)] = [];
 			return emptyStructure;
 		}, {});
-		const kickingTeamMemberPendingKicks = (await getkickingTeamMemberPendingKicksData()).val() ||
+		const kickingTeamMemberPendingKicks = (await getkickingTeamMemberPendingKicksData(database)).val() ||
 		clanListCache.reduce((emptyStructure, clanTag) => {
 			emptyStructure[clanTag.substring(1)] = {};
 			return emptyStructure;
@@ -107,6 +106,8 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 			try {
 				// TODO get from DB
 				let clanToKickPlayerTagsByClan = toKickPlayerTagsByClan[clanTag.substring(1)];
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 				const clanKickingTeamMemberPendingKicks = kickingTeamMemberPendingKicks[clanTag?.substring(1)];
 
 				// get the current clan members and check against that
