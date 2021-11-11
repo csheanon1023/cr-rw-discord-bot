@@ -7,6 +7,7 @@ const upcomingChestsCommand = require('./lib/bot-events-helpers/upcoming-chests-
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
+const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-job');
 
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
@@ -55,14 +56,16 @@ case 'production' :
 		isByLevelCommandEnabled: true,
 		isVerifyDiscordCrLinkEnabled: false,
 		isLegacyInOutLogEnabled: true,
-		isInLogEnabled: true,
-		isOutLogEnabled: true,
+		isInLogEnabled: false,
+		isOutLogEnabled: false,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
 		isGenerateEndOfRiverRaceReportEnabled: false,
 		isSendActionEndOfRiverRaceReportEnabled: false,
 		isUpcomingChestsCommandEnabled: false,
+		isToKickListCronEnabled: false,
 	};
 	break;
 case 'staging':
@@ -71,14 +74,16 @@ case 'staging':
 		isByLevelCommandEnabled: false,
 		isVerifyDiscordCrLinkEnabled: true,
 		isLegacyInOutLogEnabled: false,
-		isInLogEnabled: false,
-		isOutLogEnabled: false,
+		isInLogEnabled: true,
+		isOutLogEnabled: true,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: false,
 		isGenerateEndOfRiverRaceReportEnabled: true,
 		isSendActionEndOfRiverRaceReportEnabled: true,
 		isUpcomingChestsCommandEnabled: true,
+		isToKickListCronEnabled: true,
 	};
 	break;
 case 'dev':
@@ -89,12 +94,14 @@ case 'dev':
 		isLegacyInOutLogEnabled: true,
 		isInLogEnabled: true,
 		isOutLogEnabled: true,
+		isInOutLogsComputationEnabled: true,
 		isCollectDailyRiverRaceDataEnabled: true,
 		isGenerateDailyUnusedDecksReportEnabled: true,
 		isSendActionDailyUnusedDecksReportEnabled: true,
 		isGenerateEndOfRiverRaceReportEnabled: true,
 		isSendActionEndOfRiverRaceReportEnabled: true,
 		isUpcomingChestsCommandEnabled: true,
+		isToKickListCronEnabled: true,
 	};
 	break;
 default:
@@ -105,12 +112,14 @@ default:
 		isLegacyInOutLogEnabled: false,
 		isInLogEnabled: false,
 		isOutLogEnabled: false,
+		isInOutLogsComputationEnabled: false,
 		isCollectDailyRiverRaceDataEnabled: false,
 		isGenerateDailyUnusedDecksReportEnabled: false,
 		isSendActionDailyUnusedDecksReportEnabled: false,
 		isGenerateEndOfRiverRaceReportEnabled: false,
 		isSendActionEndOfRiverRaceReportEnabled: false,
 		isUpcomingChestsCommandEnabled: false,
+		isToKickListCronEnabled: false,
 	};
 }
 
@@ -118,6 +127,7 @@ const IN_OUT_LOGS_FLAG_COLLECTION = {
 	isLegacyInOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isLegacyInOutLogEnabled,
 	isInLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInLogEnabled,
 	isOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isOutLogEnabled,
+	isInOutLogsComputationEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isInOutLogsComputationEnabled,
 };
 
 // Event Handlers
@@ -171,3 +181,4 @@ Object.values(IN_OUT_LOGS_FLAG_COLLECTION).reduce((isEnabled, flag) => isEnabled
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
+ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isToKickListCronEnabled && toKickListCronJob.scheduleCronToRefreshKickingBoardData(database, client);
