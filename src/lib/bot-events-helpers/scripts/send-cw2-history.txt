@@ -6,6 +6,7 @@ const royaleApiTokenHelper = require('../scraping-helpers/royale-api-token-helpe
 const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wars2-history-helper');
 
 
+// const clanListCache = [ '#2PYUJUL' ];
 const clanListCache = [ '#P9QQVJVG' ];
 // const clanNameByKeyCache = {
 // 	'#2PYUJUL': 'ROYAL WARRIORS!',
