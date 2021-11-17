@@ -1,0 +1,61 @@
+const { Client } = require('discord.js');
+
+(async () => {
+	const database = await databaseRepository.connectRealtimeDatabase();
+	const client = new Client({
+		partials: ['MESSAGE', 'REACTION'],
+	});
+	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+	const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
+	const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+	const CLAN_WISE_CHANNEL_IDS = {
+		'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
+		'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
+	};
+
+	const sendMissedDeckReport = async (unusedDecksReport, channelId) => {
+
+		if (!unusedDecksReport || unusedDecksReport.length == 0) {return false;}
+		// if (channelList == null || Object.keys(channelList).length == 0) {
+		// 	console.log('No channels defined for river race report');
+		// 	return false;
+		// }
+		const channel = await client.channels.fetch(channelId);
+		const listOfPlayersWithUnusedDeckCount = unusedDecksReport
+			.map(playerUnusedDecksReport => ({
+				name: playerUnusedDecksReport.name,
+				unusedDecks: playerUnusedDecksReport.unusedDecks,
+			}))
+			.sort((player1, player2) => player2.unuesdDecks - player1.unuesdDecks);
+		const tableHead = 'Player Name     UnusedDecks';
+		const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+		const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}`;
+		return channel.send(`\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``)
+			.then(() => true)
+			.catch((e) => {
+				console.log(e);
+				return false;
+			});
+	};
+
+	for (const clan of clanListCache) {
+		const clanWarReports = (await databaseRepository.getCurrentWarMissedDecksData(clan, database)).val();
+		await sendMissedDeckReport(clanWarReports[1], CLAN_WISE_CHANNEL_IDS[clan]);
+	}
+})();
+
+
+(async () => {
+	const database = await databaseRepository.connectRealtimeDatabase();
+	const client = new Client({
+		partials: ['MESSAGE', 'REACTION'],
+	});
+	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+	const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
+	const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+	const CLAN_WISE_CHANNEL_IDS = {
+		'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
+		'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
+	};
+	scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, true);
+})();
