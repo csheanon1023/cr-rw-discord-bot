@@ -183,7 +183,7 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 			for (const clanUnusedDecksReport of unusedDecksReport) {
 				if (clanUnusedDecksReport.unusedDecksReport?.length <= 50 && Object.keys(channelList).includes(clanUnusedDecksReport.clanTag)) {
 					if (isSendAction) {
-						const isReportSentSuccessfully = sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
+						const isReportSentSuccessfully = await sendMissedDeckReport(clanUnusedDecksReport.unusedDecksReport, channelList[clanUnusedDecksReport.clanTag]);
 						if (!isReportSentSuccessfully) {return;}
 						// persist report sent flag state in DB
 						let isFlagSavedInDatabase = false;

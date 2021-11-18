@@ -8,6 +8,7 @@ const databaseRepository = require('./lib/database-helpers/database-repository')
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
 const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-job');
+const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers/collect-battle-day-initial-participant-data');
 
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
@@ -66,6 +67,7 @@ case 'production' :
 		isSendActionEndOfRiverRaceReportEnabled: false,
 		isUpcomingChestsCommandEnabled: false,
 		isToKickListCronEnabled: false,
+		isCollectBattleDayInitialParticipantDataEnabled: false,
 	};
 	break;
 case 'staging':
@@ -84,6 +86,7 @@ case 'staging':
 		isSendActionEndOfRiverRaceReportEnabled: true,
 		isUpcomingChestsCommandEnabled: true,
 		isToKickListCronEnabled: true,
+		isCollectBattleDayInitialParticipantDataEnabled: true,
 	};
 	break;
 case 'dev':
@@ -102,6 +105,7 @@ case 'dev':
 		isSendActionEndOfRiverRaceReportEnabled: true,
 		isUpcomingChestsCommandEnabled: true,
 		isToKickListCronEnabled: true,
+		isCollectBattleDayInitialParticipantDataEnabled: true,
 	};
 	break;
 default:
@@ -120,6 +124,7 @@ default:
 		isSendActionEndOfRiverRaceReportEnabled: false,
 		isUpcomingChestsCommandEnabled: false,
 		isToKickListCronEnabled: false,
+		isCollectBattleDayInitialParticipantDataEnabled: false,
 	};
 }
 
@@ -182,3 +187,4 @@ ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && ch
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isToKickListCronEnabled && toKickListCronJob.scheduleCronToRefreshKickingBoardData(database, client);
+ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectBattleDayInitialParticipantDataEnabled && collectBattleDayInitialParticipantData.scheduleCronToCollectBattleDayInitialParticipantData(database);
