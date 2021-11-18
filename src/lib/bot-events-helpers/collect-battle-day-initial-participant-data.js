@@ -10,8 +10,8 @@ const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 	let isBattleDayInitialParticipantDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 
-	// At every minute from 15 through 20 past hour 12 on Sunday, Thursday, Friday, and Saturday [offset 3] Data collection
-	cron.schedule('3 15-20 12 * * 0,4,5,6', async () => {
+	// At every minute from 15 through 20 past hour 12 on Sunday, Thursday, Friday, and Saturday [offset 21] Data collection
+	cron.schedule('21 15-20 12 * * 0,4,5,6', async () => {
 		const currentDate = new Date();
 		const currentDay = currentDate.getDay();
 		/**
@@ -81,8 +81,8 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 		}
 	});
 
-	// At minute 15, 30, and 45 past hour 11 on Sunday, Monday, Thursday, Friday, and Saturday [Offset 9] Reset flags
-	cron.schedule('9 15,30,45 11 * * 0,1,4,5,6', async () => {
+	// At minute 15, 30, and 45 past hour 11 on Sunday, Monday, Thursday, Friday, and Saturday [Offset 24] Reset flags
+	cron.schedule('24 15,30,45 11 * * 0,1,4,5,6', async () => {
 		console.info(`Reset battle day collection counts and flags at ${getCurrentTime()}`);
 		isBattleDayInitialParticipantDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 	});
