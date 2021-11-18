@@ -91,26 +91,29 @@ const clanCodeByKeyCache = {
 
 const scheduleCronToRefreshKickingBoardData = (database, client) => {
 	// At every 5th minute [offset 15]
-	// cron.schedule('15 */5 * * * *', async () => {
-	cron.schedule('15,30,45 * * * * *', async () => {
-		const toKickPlayerTagsByClan = (await getToKickPlayerTagsByClan()).val() ||
+	cron.schedule('15 */5 * * * *', async () => {
+		const toKickPlayerTagsByClan = (await getToKickPlayerTagsByClan(database)).val() ||
 		clanListCache.reduce((emptyStructure, clanTag) => {
 			emptyStructure[clanTag.substring(1)] = [];
 			return emptyStructure;
 		}, {});
-		const kickingTeamMemberPendingKicks = (await getkickingTeamMemberPendingKicksData()).val() ||
+		const kickingTeamMemberPendingKicks = (await getkickingTeamMemberPendingKicksData(database)).val() ||
 		clanListCache.reduce((emptyStructure, clanTag) => {
 			emptyStructure[clanTag.substring(1)] = {};
 			return emptyStructure;
 		}, {});
 		for (const clanTag of clanListCache) {
 			try {
-				// TODO get from DB
+				// TODO place null check in correct place
 				let clanToKickPlayerTagsByClan = toKickPlayerTagsByClan[clanTag.substring(1)];
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 				const clanKickingTeamMemberPendingKicks = kickingTeamMemberPendingKicks[clanTag?.substring(1)];
 
 				// get the current clan members and check against that
 				const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
+				if (!clanToKickPlayerTagsByClan || clanToKickPlayerTagsByClan.length === 0)
+					continue;
 				const clanMemberList = memberListData.items.map(({ tag }) => tag);
 				clanToKickPlayerTagsByClan = clanToKickPlayerTagsByClan?.filter(playerTag => clanMemberList.includes(playerTag));
 				for (const playerTag in clanKickingTeamMemberPendingKicks) {
@@ -129,7 +132,7 @@ const scheduleCronToRefreshKickingBoardData = (database, client) => {
 				// update the DB
 				Promise.all([
 					setToKickPlayerTagsByClan(clanTag, clanToKickPlayerTagsByClan, database),
-					setkickingTeamMemberPendingKicksData(clanTag, clanToKickPlayerTagsByClan, database),
+					setkickingTeamMemberPendingKicksData(clanTag, clanKickingTeamMemberPendingKicks, database),
 				]).then(() => console.log('Kick list data saved to DB'))
 					.catch(error => console.error(`Something went wrong while saving kick list data. \nerror: ${error}`));
 

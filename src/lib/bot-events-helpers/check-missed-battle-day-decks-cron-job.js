@@ -1,3 +1,4 @@
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/check-missed-battle-day-decks-cron-job.js
 const databaseRepository = require('../database-helpers/database-repository');
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
 const riverRaceLogDataHelper = require('../clash-royale-api-helpers/river-race-log-data-helper');

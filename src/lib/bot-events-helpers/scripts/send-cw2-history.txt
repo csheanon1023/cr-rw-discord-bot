@@ -1,0 +1,188 @@
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/send-cw2-history.js
+const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
+const playerDataHelper = require('../clash-royale-api-helpers/player-data-helper');
+const { MessageEmbed } = require('discord.js');
+const royaleApiTokenHelper = require('../scraping-helpers/royale-api-token-helper');
+const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wars2-history-helper');
+
+
+// const clanListCache = [ '#2PYUJUL' ];
+const clanListCache = [ '#P9QQVJVG' ];
+// const clanNameByKeyCache = {
+// 	'#2PYUJUL': 'ROYAL WARRIORS!',
+// 	'#P9QQVJVG': 'HARAMI_CLASHERS',
+// };
+const clanCodeByKeyCache = {
+	'2PYUJUL': 'RW',
+	'P9QQVJVG': 'HC',
+};
+const embedBannerColours = {
+	COLOUR_ORANGE: '#f56200',
+	COLOUR_RED: '#f52700',
+	COLOUR_YELLOW: '#ca9a00',
+	COLOUR_DULL_GREEN : '#ddf000',
+	COLOUR_BRIGHT_GREEN: '#56f000',
+	COLOUR_PURPLE: '#a114ff',
+	COLOUR_DEFAULT: '#f56200',
+};
+let rApiToken = null;
+const ROYALE_API_BASE_URL = 'https://royaleapi.com/';
+
+const sendInEmbed = async (playerTag, clanTag, client, channelIds) => {
+	try {
+		if (!playerTag || playerTag == '') {return false;}
+		const response = await playerDataHelper.getPlayerData(playerTag);
+		const playerDetails = response.data;
+		if (!(channelIds && channelIds.IN_LOG_CHANNEL_ID)) {
+			console.log('No channels defined for in-log');
+			return false;
+		}
+		const channel = await client.channels.fetch(channelIds.IN_LOG_CHANNEL_ID);
+		const playerJoinedEmbed = new MessageEmbed()
+			.setTitle(`[${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
+			.addFields(
+				{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
+				{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
+			)
+			.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
+			.setTimestamp();
+
+		const clanWar2History = await getClanWars2History(rApiToken, playerTag, playerDetails.name);
+		if (clanWar2History) {
+			if (!clanWar2History.success || clanWar2History.rows.length == 0) {
+				playerJoinedEmbed
+					.setColor(embedBannerColours.COLOUR_ORANGE)
+					.addFields(
+						{ name: 'CW2 History', value: 'NA(0)', inline: true },
+						{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
+						{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
+						{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
+						{ name: 'Recommended action', value: 'We don\'t have enough data on this player to make a prediction.', inline: false },
+					);
+				console.error(`In log, get clan war 2 history succeeded but success flag is false or data is empty status:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
+			}
+
+			else {
+				// Overall
+				const contributions = clanWar2History.rows.map(raceStats => raceStats.fame || raceStats.contribution);
+				const totalRecordsFound = contributions.length;
+				const totalFame = contributions.reduce((sum, fame) => sum + fame, 0);
+				const overallAverage = Math.ceil(totalFame / totalRecordsFound);
+
+				// Last 10 records
+				const lastTenContributions = contributions.slice(0, 10);
+				const lastTenTotalRecordsFound = lastTenContributions.length;
+				const lastTenTotalFame = lastTenContributions.reduce((sum, fame) => sum + fame, 0);
+				const lastTenOverallAverage = Math.ceil(lastTenTotalFame / lastTenTotalRecordsFound);
+
+				// Best 10 records
+				const bestTenContributions = contributions.sort((a, b) => b - a).slice(0, 10);
+				const bestTenTotalRecordsFound = bestTenContributions.length;
+				const bestTenTotalFame = bestTenContributions.reduce((sum, fame) => sum + fame, 0);
+				const bestTenOverallAverage = Math.ceil(bestTenTotalFame / bestTenTotalRecordsFound);
+
+				// Worst 10 records
+				const worstTenContributions = contributions.sort((a, b) => a - b).slice(0, 10);
+				const worstTenTotalRecordsFound = worstTenContributions.length;
+				const worstTenTotalFame = worstTenContributions.reduce((sum, fame) => sum + fame, 0);
+				const worstTenOverallAverage = Math.ceil(worstTenTotalFame / worstTenTotalRecordsFound);
+
+				// Find correct banner colour and recommendation message
+				let bannerColour = embedBannerColours.COLOUR_DEFAULT;
+				let recommendationMessage = 'NA';
+				if (lastTenTotalRecordsFound <= 5) {
+					bannerColour = embedBannerColours.COLOUR_ORANGE;
+					recommendationMessage = `We don't have enough data on this player to make a prediction. (Only ${lastTenTotalRecordsFound} records found)`;
+				}
+				else if (lastTenOverallAverage < 800) {
+					bannerColour = embedBannerColours.COLOUR_RED;
+					recommendationMessage = 'CW2 score is too low, player should be kicked out.';
+				}
+				else if (lastTenOverallAverage >= 800 && lastTenOverallAverage < 1400) {
+					bannerColour = embedBannerColours.COLOUR_YELLOW;
+					recommendationMessage = 'Player\'s CW2 score is not very promising, monitor for 1-2 weeks then kick if they are missing battles frequently.';
+				}
+				else if (lastTenOverallAverage >= 1400 && lastTenOverallAverage < 2000) {
+					bannerColour = embedBannerColours.COLOUR_DULL_GREEN;
+					recommendationMessage = 'Decent CW2 score, we should retain the player.';
+				}
+				else if (lastTenOverallAverage >= 2000 && lastTenOverallAverage < 2600) {
+					bannerColour = embedBannerColours.COLOUR_BRIGHT_GREEN;
+					recommendationMessage = 'Very good CW2 history, we should retain the player.';
+				}
+				else {
+					bannerColour = embedBannerColours.COLOUR_PURPLE;
+					recommendationMessage = 'Exceptional CW2 history, expected to boost our clan performance significantly.';
+				}
+
+				playerJoinedEmbed
+					.setColor(bannerColour)
+					.addFields(
+						{ name: 'CW2 History', value: totalRecordsFound != 0 ? `${overallAverage} (${totalRecordsFound})` : 'NA(0)', inline: true },
+						{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
+						{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
+						{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
+						{ name: 'Recommended action', value: recommendationMessage, inline: false },
+					);
+			}
+		}
+		else {
+			playerJoinedEmbed
+				.setColor(embedBannerColours.COLOUR_ORANGE)
+				.addField('Something went wrong', 'Failed to fetch player info, title of this message links to this player\'s profile on RoyaleAPI, click on that to get details about this player', false);
+		}
+		channel.send(playerJoinedEmbed);
+		console.log(`${playerDetails.name} has joined ${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}`);
+	}
+	catch (error) {
+		console.error('In log, send embed failed\nerror:' + error);
+		console.info(`Params: change:Join;playerTag:${playerTag};clanTag:${clanTag}` + error);
+		return false;
+	}
+};
+
+const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
+	try {
+
+		let clanWar2History = royaleApiToken == null ? false : await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
+		if (!clanWar2History) {
+			royaleApiToken =
+					await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true) ||
+					await royaleApiTokenHelper.generateRoyaleApiTokenOrFault(true);
+			if (!royaleApiToken)
+				return false;
+			rApiToken = royaleApiToken;
+			clanWar2History =
+					await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName) ||
+					await playerClanWars2HistoryHelper.getPlayerClanWar2HistoryOrFault(royaleApiToken, playerTag, playerName, true);
+		}
+		return clanWar2History;
+	}
+	catch (error) {
+		console.error(`In log, get clan war 2 history failed \n${error}`);
+		return false;
+	}
+};
+
+const { Client } = require('discord.js');
+
+(async () => {
+	const client = new Client({
+		partials: ['MESSAGE', 'REACTION'],
+	});
+	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+	const channleIdByClan = {
+		'#2PYUJUL': '904461174664470628',
+		'#P9QQVJVG': '904472570135457853',
+	};
+
+	for (const clanTag of clanListCache) {
+		let offset = 0;
+		const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
+		const members = memberListData.items;
+		for (const { tag } of members) {
+			offset += Math.floor((Math.random() * 100) % 6);
+			setTimeout(() => sendInEmbed(tag, clanTag, client, { IN_LOG_CHANNEL_ID: channleIdByClan[clanTag] }), offset * 1000);
+		}
+	}
+})();
