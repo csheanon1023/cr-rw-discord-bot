@@ -225,8 +225,8 @@ const getCurrentWarBattleDayParticipantData = (clanTag, database) => {
 	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}`).once('value');
 };
 
-const setCurrentWarBattleDayParticipantData = (clanTag, periodIndex, data, database) => {
-	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${periodIndex}`).set(data)
+const setCurrentWarBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
 		.then(() => {
 			console.info(`Data saved successfully. Key:current-war-battle-day-initial-participant-data ClanTag:${clanTag} periodIndex:${periodIndex}`);
 			return true;
