@@ -53,7 +53,7 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 				membersDataHelper.getMembers(clanTag).then(({ data: currentClanMemberList }) => {
 					const clanBattleDayParticipantDataSnap = {};
 					const memberListTagsArray = currentClanMemberList.items.map(member => member.tag);
-					const currentParticipantsData = clanCurrentRiverRaceData?.clan?.currentParticipantList
+					const currentParticipantsData = clanCurrentRiverRaceData?.clan?.participants
 						.filter(participant => memberListTagsArray.includes(participant.tag))
 						.map(participant => participant);
 					clanBattleDayParticipantDataSnap[clanTag.substring(1)] = {
