@@ -1,0 +1,6 @@
+const { connectRealtimeDatabase } = require('../database-helpers/database-repository');
+
+(async () => {
+	const database = await connectRealtimeDatabase();
+	scheduleCronToCollectBattleDayInitialParticipantData(database);
+})();
