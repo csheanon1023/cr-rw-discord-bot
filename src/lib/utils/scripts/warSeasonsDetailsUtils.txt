@@ -1,0 +1,6 @@
+(async () => {
+	const clanTag = '#2PYUJUL';
+	console.log(await getCurrentSeasonDetailsUptoSpecificPeriod(clanTag));
+	console.log(await getPreviousSeasonDetailsUptoSpecificPeriod(clanTag));
+	console.log(await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag));
+})();
