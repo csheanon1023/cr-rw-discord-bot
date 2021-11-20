@@ -1,5 +1,5 @@
 // to run script: node -r dotenv/config ./src/lib/bot-events-helpers/collect-battle-day-initial-participant-data.js
-const { setCurrentWarEndOfBattleDayParticipantData } = require('../database-helpers/database-repository');
+const { setCurrentWarBattleDayParticipantData } = require('../database-helpers/database-repository');
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const { getCurrentSeasonDetailsUptoSpecificPeriod } = require('../utils/warSeasonDetailsUtils');
@@ -66,7 +66,7 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 							seasonDetails: currentSeasonDetails,
 						};
 						if (clanBattleDayParticipantDataSnap && Object.keys(clanBattleDayParticipantDataSnap).length !== 0) {
-							setCurrentWarEndOfBattleDayParticipantData(clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
+							setCurrentWarBattleDayParticipantData (clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
 								isBattleDayInitialParticipantDataSnapSaved[clanCurrentRiverRaceData?.clan?.tag] = isSaved;
 							}).catch((error) => {
 								console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, saving to DB step \n${error}`);
