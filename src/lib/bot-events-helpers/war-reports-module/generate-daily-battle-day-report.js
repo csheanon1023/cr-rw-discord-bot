@@ -121,7 +121,7 @@ const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
 		});
 };
 
-const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds) => {
+const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds, isSendAction = false) => {
 	let isDailyBattleDayReportSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 	let isDailyBattleDayReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 
@@ -158,8 +158,8 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 					saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport).then(isSaved => {
 						isDailyBattleDayReportSaved[clanTag] = isSaved;
 					});
-				isDailyBattleDayReportSent[clanTag] ?
-					console.log(`${formattedCurrentTime} Skipping river race report send action, report for ${clanTag} has already been saved`) :
+				isDailyBattleDayReportSent[clanTag] || !isSendAction ?
+					console.log(`${formattedCurrentTime} Skipping river race report send action, report for ${clanTag} has already been saved OR sendAction:${isSendAction}`) :
 					sendBattleDayReport(client, channelIds[clanTag], unusedDecksReport).then(isSent => {
 						isDailyBattleDayReportSent[clanTag] = isSent;
 					});
