@@ -1,0 +1,9 @@
+const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
+(async () => {
+	const database = await connectRealtimeDatabase();
+	for (const clanTag of clanListCache) {
+		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		const unusedDecksReport = await generateBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
+		saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
+	}
+})();

@@ -73,6 +73,7 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 				unusedDecksReport.unusedDecksReport.push(reportPlayerData);
 			}
 		});
+		return unusedDecksReport;
 	}
 	catch (error) {
 		console.error(`generate daily battle day report failed, generate report \n${error}`);
