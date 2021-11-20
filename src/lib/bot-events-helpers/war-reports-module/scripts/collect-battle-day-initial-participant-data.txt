@@ -1,6 +1,6 @@
 	cron.schedule('21,41,1 * * * * *', async () => {
 
-const { connectRealtimeDatabase } = require('../database-helpers/database-repository');
+const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
 
 (async () => {
 	const database = await connectRealtimeDatabase();
