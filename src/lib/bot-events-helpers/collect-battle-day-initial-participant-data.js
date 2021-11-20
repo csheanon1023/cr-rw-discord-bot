@@ -66,7 +66,7 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 							seasonDetails: currentSeasonDetails,
 						};
 						if (clanBattleDayParticipantDataSnap && Object.keys(clanBattleDayParticipantDataSnap).length !== 0) {
-							setCurrentWarBattleDayParticipantData (clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
+							setCurrentWarBattleDayParticipantData(clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
 								isBattleDayInitialParticipantDataSnapSaved[clanCurrentRiverRaceData?.clan?.tag] = isSaved;
 							}).catch((error) => {
 								console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, saving to DB step \n${error}`);
