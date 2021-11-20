@@ -2,10 +2,15 @@
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
 const riverRaceLogDataHelper = require('../clash-royale-api-helpers/river-race-log-data-helper');
 
-const getCurrentSeasonDetailsUptoSpecificPeriod = async (clanTag) => {
+const getCurrentSeasonDetailsUptoSpecificPeriod = async (clanTag, currentRiverRaceData = null, riverRaceLogData = null) => {
 	try {
 		const seasonDetails = {};
-		const [ { data: currentRiverRaceData }, { data: riverRaceLogData }] = await Promise.all([currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag), riverRaceLogDataHelper.getRiverRaceLogData(clanTag)]);
+		if (!currentRiverRaceData) {
+			currentRiverRaceData = (await currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag))?.data;
+		}
+		if (!riverRaceLogData) {
+			riverRaceLogData = (await riverRaceLogDataHelper.getRiverRaceLogData(clanTag))?.data;
+		}
 		const lastRaceLogData = riverRaceLogData?.items?.[0];
 		const currentRaceSectionIndex = currentRiverRaceData?.sectionIndex;
 		seasonDetails.sectionIndex = currentRaceSectionIndex;
@@ -26,10 +31,15 @@ const getCurrentSeasonDetailsUptoSpecificPeriod = async (clanTag) => {
 	}
 };
 
-const getPreviousSeasonDetailsUptoSpecificPeriod = async (clanTag) => {
+const getPreviousSeasonDetailsUptoSpecificPeriod = async (clanTag, currentRiverRaceData = null, riverRaceLogData = null) => {
 	try {
 		const seasonDetails = {};
-		const [ { data: currentRiverRaceData }, { data: riverRaceLogData }] = await Promise.all([currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag), riverRaceLogDataHelper.getRiverRaceLogData(clanTag)]);
+		if (!currentRiverRaceData) {
+			currentRiverRaceData = (await currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag))?.data;
+		}
+		if (!riverRaceLogData) {
+			riverRaceLogData = (await riverRaceLogDataHelper.getRiverRaceLogData(clanTag))?.data;
+		}
 		const lastRaceLogData = riverRaceLogData?.items?.[0];
 		const currentRaceSectionIndex = currentRiverRaceData?.sectionIndex;
 
@@ -60,10 +70,15 @@ const getPreviousSeasonDetailsUptoSpecificPeriod = async (clanTag) => {
 	}
 };
 
-const getPreviousSeasonDetailsUptoSpecificBattleDayPeriod = async (clanTag) => {
+const getPreviousSeasonDetailsUptoSpecificBattleDayPeriod = async (clanTag, currentRiverRaceData = null, riverRaceLogData = null) => {
 	try {
 		const seasonDetails = {};
-		const [ { data: currentRiverRaceData }, { data: riverRaceLogData }] = await Promise.all([currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag), riverRaceLogDataHelper.getRiverRaceLogData(clanTag)]);
+		if (!currentRiverRaceData) {
+			currentRiverRaceData = (await currentRiverRaceDataHelper.getCurrentRiverRaceData(clanTag))?.data;
+		}
+		if (!riverRaceLogData) {
+			riverRaceLogData = (await riverRaceLogDataHelper.getRiverRaceLogData(clanTag))?.data;
+		}
 		const lastRaceLogData = riverRaceLogData?.items?.[0];
 		const currentRaceSectionIndex = currentRiverRaceData?.sectionIndex;
 
