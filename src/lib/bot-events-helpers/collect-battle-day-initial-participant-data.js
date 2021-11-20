@@ -1,5 +1,5 @@
 // to run script: node -r dotenv/config ./src/lib/bot-events-helpers/collect-battle-day-initial-participant-data.js
-const { setCurrentWarBattleDayParticipantData } = require('../database-helpers/database-repository');
+const { setCurrentWarEndOfBattleDayParticipantData } = require('../database-helpers/database-repository');
 const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
 const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
 const { getCurrentSeasonDetailsUptoSpecificPeriod } = require('../utils/warSeasonDetailsUtils');
@@ -28,19 +28,19 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 		const formattedCurrentTime = getCurrentTime(currentDate);
 
 		if (clanListCache == null || clanListCache.length == 0) {
-			console.log(`${formattedCurrentTime} Skipping battle day data collection, clanListCache is empty`);
+			console.log(`${formattedCurrentTime} Skipping battle day initial participant data collection, clanListCache is empty`);
 			return;
 		}
 
 		if (Object.values(isBattleDayInitialParticipantDataSnapSaved).find(val => val == false) == undefined) {
-			console.info(`${formattedCurrentTime} Skipping battle day data collection, data has been updated to next day for all clans`);
+			console.info(`${formattedCurrentTime} Skipping battle day initial participant data collection, data collection is completed for all clans`);
 			return;
 		}
 
 		for (const clanTag of clanListCache) {
 			try {
 				if (isBattleDayInitialParticipantDataSnapSaved[clanTag]) {
-					console.info(`${formattedCurrentTime} Skipping battle day data collection for ${clanTag}, data has already been updated`);
+					console.info(`${formattedCurrentTime} Skipping battle day initial participant data collection for ${clanTag}, data has already been updated`);
 					continue;
 				}
 
@@ -49,7 +49,7 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 
 					// Skip me for testing or manual triggers (validation)
 					if (clanCurrentRiverRaceData?.periodIndex % 7 != currentRiverRacePeriodIndex) {
-						console.log(`${formattedCurrentTime} Skipping battle day data collection for ${clanTag}, periodIndex value was unexpected`);
+						console.log(`${formattedCurrentTime} Skipping battle day initial participant data collection for ${clanTag}, periodIndex value was unexpected`);
 						return;
 					}
 
@@ -60,30 +60,30 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 							.map(participant => participant);
 						const clanBattleDayParticipantDataSnap = {
 							clanName: clanCurrentRiverRaceData?.clan?.name,
-							currentParticipantsData: currentParticipantsData,
-							periodIndex: clanCurrentRiverRaceData?.periodIndex,
+							clanTag: clanCurrentRiverRaceData?.clan?.tag,
+							participants: currentParticipantsData,
 							timestamp: currentDate.getTime(),
-							currentSeasonDetails: currentSeasonDetails,
+							seasonDetails: currentSeasonDetails,
 						};
 						if (clanBattleDayParticipantDataSnap && Object.keys(clanBattleDayParticipantDataSnap).length !== 0) {
-							setCurrentWarBattleDayParticipantData(clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
+							setCurrentWarEndOfBattleDayParticipantData(clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
 								isBattleDayInitialParticipantDataSnapSaved[clanCurrentRiverRaceData?.clan?.tag] = isSaved;
 							}).catch((error) => {
-								console.error(`${formattedCurrentTime} battle day data collection cron failed, saving to DB step \n${error}`);
+								console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, saving to DB step \n${error}`);
 								return;
 							});
 						}
 					}).catch((error) => {
-						console.error(`${formattedCurrentTime} battle day data collection cron failed, get current members step \n${error}`);
+						console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, get current members step \n${error}`);
 						return;
 					});
 				}).catch((error) => {
-					console.error(`${formattedCurrentTime} battle day data collection cron failed get river race data step \n${error}`);
+					console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed get river race data step \n${error}`);
 					return;
 				});
 			}
 			catch (error) {
-				console.error(`${formattedCurrentTime} battle day data collection cron failed, get season details step \n${error}`);
+				console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, get season details step \n${error}`);
 			}
 		}
 	});

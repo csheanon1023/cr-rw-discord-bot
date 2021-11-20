@@ -10,6 +10,7 @@ const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
 const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
 const DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT = 'current-war-battle-day-initial-participant-data';
+const DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT = 'current-war-end-of-battle-day-participant-data';
 // Discord - CR mapping
 const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-requests';
 const DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT = 'already-linked-player-tags';
@@ -237,6 +238,23 @@ const setCurrentWarBattleDayParticipantData = (clanTag, seasonId, periodIndex, d
 		});
 };
 
+// current-war-end-of-battle-day-participant-data
+const getCurrentWarEndOfBattleDayParticipantData = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+const setCurrentWarEndOfBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+		.then(() => {
+			console.info(`Data saved successfully. Key:current-war-end-of-battle-day-participant-data ClanTag:${clanTag} periodIndex:${periodIndex}`);
+			return true;
+		})
+		.catch(error => {
+			console.error(`Data could not be saved. Key:current-war-end-of-battle-day-participant-data ClanTag:${clanTag} periodIndex:${periodIndex} \nerror: ${error}`);
+			return false;
+		});
+};
+
 module.exports = {
 	connectRealtimeDatabase,
 	getLastKnownMembersListData,
@@ -263,4 +281,6 @@ module.exports = {
 	setkickingTeamMemberPendingKicksData,
 	getCurrentWarBattleDayParticipantData,
 	setCurrentWarBattleDayParticipantData,
+	getCurrentWarEndOfBattleDayParticipantData,
+	setCurrentWarEndOfBattleDayParticipantData,
 };
