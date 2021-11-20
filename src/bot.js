@@ -8,8 +8,9 @@ const databaseRepository = require('./lib/database-helpers/database-repository')
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
 const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
 const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-job');
-const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers/collect-battle-day-initial-participant-data');
-
+const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-battle-day-initial-participant-data');
+const collectEndOfBattleDayParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-end-of-battle-day-participant-data');
+const generateDailyBattleDayReport = require('./lib/bot-events-helpers/war-reports-module/generate-daily-battle-day-report');
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
 
@@ -68,6 +69,8 @@ case 'production' :
 		isUpcomingChestsCommandEnabled: false,
 		isToKickListCronEnabled: false,
 		isCollectBattleDayInitialParticipantDataEnabled: false,
+		isCollectEndOfBattleDayParticipantDataEnabled: false,
+		isGenerateDailyBattleDayReportEnabled: false,
 	};
 	break;
 case 'staging':
@@ -87,6 +90,8 @@ case 'staging':
 		isUpcomingChestsCommandEnabled: true,
 		isToKickListCronEnabled: true,
 		isCollectBattleDayInitialParticipantDataEnabled: true,
+		isCollectEndOfBattleDayParticipantDataEnabled: true,
+		isGenerateDailyBattleDayReportEnabled: true,
 	};
 	break;
 case 'dev':
@@ -106,6 +111,8 @@ case 'dev':
 		isUpcomingChestsCommandEnabled: true,
 		isToKickListCronEnabled: true,
 		isCollectBattleDayInitialParticipantDataEnabled: true,
+		isCollectEndOfBattleDayParticipantDataEnabled: true,
+		isGenerateDailyBattleDayReportEnabled: true,
 	};
 	break;
 default:
@@ -125,6 +132,8 @@ default:
 		isUpcomingChestsCommandEnabled: false,
 		isToKickListCronEnabled: false,
 		isCollectBattleDayInitialParticipantDataEnabled: false,
+		isCollectEndOfBattleDayParticipantDataEnabled: false,
+		isGenerateDailyBattleDayReportEnabled: false,
 	};
 }
 
@@ -187,4 +196,7 @@ ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && ch
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, CLAN_WISE_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isToKickListCronEnabled && toKickListCronJob.scheduleCronToRefreshKickingBoardData(database, client);
+
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectBattleDayInitialParticipantDataEnabled && collectBattleDayInitialParticipantData.scheduleCronToCollectBattleDayInitialParticipantData(database);
+ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectEndOfBattleDayParticipantDataEnabled && collectEndOfBattleDayParticipantData.scheduleCronToCollectEndOfBattleDayParticipantData(database);
+ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyBattleDayReportEnabled && generateDailyBattleDayReport.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, { '#2PYUJUL': '904461174664470628', '#P9QQVJVG': '904472570135457853' }, true);

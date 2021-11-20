@@ -1,10 +1,10 @@
-// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/collect-end-of-battle-day-participant-data.js
-const { setCurrentWarEndOfBattleDayParticipantData } = require('../database-helpers/database-repository');
-const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
-const riverRaceLogDataHelper = require('../clash-royale-api-helpers/river-race-log-data-helper');
-const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../utils/warSeasonDetailsUtils');
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module/collect-end-of-battle-day-participant-data.js
+const { setCurrentWarEndOfBattleDayParticipantData } = require('../../database-helpers/database-repository');
+const currentRiverRaceDataHelper = require('../../clash-royale-api-helpers/current-river-race-data-helper');
+const riverRaceLogDataHelper = require('../../clash-royale-api-helpers/river-race-log-data-helper');
+const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../../utils/warSeasonDetailsUtils');
 const cron = require('node-cron');
-const { getCurrentTime } = require('../utils/dateTimeUtils');
+const { getCurrentTime } = require('../../utils/dateTimeUtils');
 
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 
@@ -79,6 +79,7 @@ const scheduleCronToCollectEndOfBattleDayParticipantData = (database) => {
 			}
 			catch (error) {
 				console.error(`${formattedCurrentTime} end of battle day data collection cron failed, main body \n${error}`);
+				continue;
 			}
 		}
 	});

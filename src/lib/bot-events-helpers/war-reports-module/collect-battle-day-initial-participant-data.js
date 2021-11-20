@@ -1,10 +1,10 @@
-// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/collect-battle-day-initial-participant-data.js
-const { setCurrentWarBattleDayParticipantData } = require('../database-helpers/database-repository');
-const currentRiverRaceDataHelper = require('../clash-royale-api-helpers/current-river-race-data-helper');
-const membersDataHelper = require('../clash-royale-api-helpers/members-data-helper');
-const { getCurrentSeasonDetailsUptoSpecificPeriod } = require('../utils/warSeasonDetailsUtils');
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module/collect-battle-day-initial-participant-data.js
+const { setCurrentWarBattleDayParticipantData } = require('../../database-helpers/database-repository');
+const currentRiverRaceDataHelper = require('../../clash-royale-api-helpers/current-river-race-data-helper');
+const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
+const { getCurrentSeasonDetailsUptoSpecificPeriod } = require('../../utils/warSeasonDetailsUtils');
 const cron = require('node-cron');
-const { getCurrentTime } = require('../utils/dateTimeUtils');
+const { getCurrentTime } = require('../../utils/dateTimeUtils');
 
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 
