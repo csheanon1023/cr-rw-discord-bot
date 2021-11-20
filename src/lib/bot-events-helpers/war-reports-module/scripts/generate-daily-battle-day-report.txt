@@ -1,9 +1,19 @@
+const { Client } = require('discord.js');
 const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
 (async () => {
+	const client = new Client({
+		partials: ['MESSAGE', 'REACTION'],
+	});
+	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+	const channleIdByClan = {
+		'#2PYUJUL': '904461174664470628',
+		'#P9QQVJVG': '904472570135457853',
+	};
 	const database = await connectRealtimeDatabase();
 	for (const clanTag of clanListCache) {
 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 		const unusedDecksReport = await generateBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
 		saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
+		sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
 	}
 })();

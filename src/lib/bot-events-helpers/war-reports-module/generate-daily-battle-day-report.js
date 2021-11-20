@@ -5,8 +5,10 @@ const {
 	setSeasonWiseBattleDayGeneratedReports,
 } = require('../../database-helpers/database-repository');
 const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../../utils/warSeasonDetailsUtils');
+const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
 const cron = require('node-cron');
 const { getCurrentTime } = require('../../utils/dateTimeUtils');
+const { MessageEmbed } = require('discord.js');
 
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 
@@ -46,7 +48,7 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 		// Generate Report
 		const unusedDecksReport = {
 			seasonDetails: {
-				SeasonId: seasonId,
+				seasonId: seasonId,
 				periodIndex: periodIndex,
 				sectionIndex: Math.floor((periodIndex + 1) / 7),
 			},
@@ -86,8 +88,42 @@ const saveBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, per
 	return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
 };
 
-const scheduleCronToGenerateDailyMissedBattleDecksReport = (database) => {
+const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
+	if (!unusedDecksReport.unusedDecksReport || unusedDecksReport.unusedDecksReport.length == 0) {
+		console.error('send action daily battle day report failed, unusedDecksReport not valid value');
+		return false;
+	}
+	const { seasonDetails } = unusedDecksReport;
+	const channel = await client.channels.fetch(channelId);
+	const currentClanMemberList = await membersDataHelper.getMembers(unusedDecksReport.clanTag);
+	// TODO fix sort, and put star in players who have left
+	const listOfPlayersWithUnusedDeckCount = unusedDecksReport.unusedDecksReport
+		.filter(player => currentClanMemberList.data.items.find(member => member.tag == player.tag))
+		.sort((player1, player2) => player2.unuesdDecks - player1.unuesdDecks)
+		.map(playerUnusedDecksReport => ({
+			name: playerUnusedDecksReport.name,
+			unusedDecks: playerUnusedDecksReport.unusedDecks,
+		}));
+	const tableHead = 'Player Name     UnusedDecks';
+	const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+	const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}`;
+	const reportField = `\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``;
+	const dailyReportEmbed = new MessageEmbed()
+		.setTitle(`Season ${seasonDetails.seasonId || 'NA'}|Week ${seasonDetails.sectionIndex + 1 || 'NA'}|Day ${(seasonDetails.periodIndex + 4) % 7 || 'NA'}`)
+		.setDescription('Daily missed battle day report')
+		.addField('Report', reportField, false)
+		.setTimestamp();
+	channel.send(dailyReportEmbed)
+		.then(() => true)
+		.catch((e) => {
+			console.error(`send action daily battle day report failed, send embed\n${e}`);
+			return false;
+		});
+};
+
+const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds) => {
 	let isDailyBattleDayReportSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
+	let isDailyBattleDayReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 
 	// At every minute from 15 through 20 past hour 10 on Sunday, Monday, Friday, and Saturday [offset 48] Report generation
 	cron.schedule('48 30-35 10 * * 0,1,5,6', async () => {
@@ -99,8 +135,11 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database) => {
 			return;
 		}
 
-		if (Object.values(isDailyBattleDayReportSaved).find(val => val == false) == undefined) {
-			console.log(`${formattedCurrentTime} Skipping river race report generation cron, all reports have already been sent`);
+		if (
+			Object.values(isDailyBattleDayReportSaved).find(val => val == false) == undefined &&
+			Object.values(isDailyBattleDayReportSent).find(val => val == false) == undefined
+		) {
+			console.log(`${formattedCurrentTime} Skipping river race report generation cron, all reports have already been saved and sent`);
 			return;
 		}
 
@@ -108,15 +147,22 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database) => {
 			// Generate Report
 			for (const clanTag of clanListCache) {
 				// TODO check if db has a report already
-				if (isDailyBattleDayReportSaved[clanTag]) {
-					console.log(`${formattedCurrentTime} report for ${clanTag} has already been generated`);
+				if (isDailyBattleDayReportSaved[clanTag] && isDailyBattleDayReportSent[clanTag]) {
+					console.log(`${formattedCurrentTime} Skipping river race report generation cron, report for ${clanTag} has already been saved and sent`);
 					continue;
 				}
 				const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 				const unusedDecksReport = await generateBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
-				saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport).then(isSaved => {
-					isDailyBattleDayReportSaved[clanTag] = isSaved;
-				});
+				isDailyBattleDayReportSaved[clanTag] ?
+					console.log(`${formattedCurrentTime} Skipping river race report save to DB, report for ${clanTag} has already been saved`) :
+					saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport).then(isSaved => {
+						isDailyBattleDayReportSaved[clanTag] = isSaved;
+					});
+				isDailyBattleDayReportSent[clanTag] ?
+					console.log(`${formattedCurrentTime} Skipping river race report send action, report for ${clanTag} has already been saved`) :
+					sendBattleDayReport(client, channelIds[clanTag], unusedDecksReport).then(isSent => {
+						isDailyBattleDayReportSent[clanTag] = isSent;
+					});
 			}
 		}
 		catch (e) {
@@ -129,8 +175,9 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database) => {
 	// At minute 15, 30, and 45 past hour 11 on Sunday, Monday, Thursday, Friday, and Saturday [Offset 9] Reset flags
 	cron.schedule('9 15,30,45 11 * * 0,1,4,5,6', async () => {
 		const currentdate = getCurrentTime();
-		console.log(`Reset counts and flags (isDailyBattleDayReportSaved) at ${currentdate}`);
+		console.log(`Reset counts and flags (isDailyBattleDayReportSaved, isDailyBattleDayReportSent) at ${currentdate}`);
 		isDailyBattleDayReportSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
+		isDailyBattleDayReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 	});
 };
 
