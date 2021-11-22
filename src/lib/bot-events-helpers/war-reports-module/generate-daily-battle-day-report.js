@@ -51,7 +51,7 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 			seasonDetails: {
 				seasonId: seasonId,
 				periodIndex: periodIndex,
-				sectionIndex: Math.floor((periodIndex + 1) / 7),
+				sectionIndex: Math.floor(periodIndex / 7),
 			},
 			clanTag: clanTag,
 			unusedDecksReport: [],
@@ -101,20 +101,20 @@ const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
 	}
 	const { seasonDetails } = unusedDecksReport;
 	const channel = await client.channels.fetch(channelId);
-	const currentClanMemberList = await membersDataHelper.getMembers(unusedDecksReport.clanTag);
+	const currentClanMemberList = (await membersDataHelper.getMembers(unusedDecksReport.clanTag))?.data?.items?.map(member => member.tag);
 	// TODO fix sort, and put star in players who have left
-	const listOfPlayersWithUnusedDeckCount = unusedDecksReport.unusedDecksReport
-		.filter(player => currentClanMemberList.data.items.find(member => member.tag == player.tag))
-		.sort((player1, player2) => player2.unuesdDecks - player1.unuesdDecks)
-		.map(playerUnusedDecksReport => ({
-			name: playerUnusedDecksReport.name,
-			unusedDecks: playerUnusedDecksReport.unusedDecks,
-		}));
+	// Note sort should be at the separate as it mutates the array
+	const listOfPlayersWithUnusedDeckCount = unusedDecksReport.unusedDecksReport.map(player => ({
+		name: `${currentClanMemberList.includes(player.tag) ? '' : '*'}${player.name}`,
+		unusedDecks: player.unusedDecks,
+	}));
+	listOfPlayersWithUnusedDeckCount.sort((player1, player2) => player2.unuesdDecks - player1.unuesdDecks);
 	const tableHead = 'Player Name     UnusedDecks';
 	const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
 	const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}`;
 	const reportField = `\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``;
 	const dailyReportEmbed = new MessageEmbed()
+		.setColor('#cc7900')
 		.setTitle(`Season ${seasonDetails.seasonId || 'NA'}|Week ${seasonDetails.sectionIndex + 1 || 'NA'}|Day ${(seasonDetails.periodIndex + 5) % 7 || 'NA'}`)
 		.setDescription('Daily missed battle day report')
 		.addField('Report', reportField, false)
