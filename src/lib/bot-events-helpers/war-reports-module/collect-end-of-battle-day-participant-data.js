@@ -55,7 +55,7 @@ const scheduleCronToCollectEndOfBattleDayParticipantData = (database) => {
 
 				else if (normalizedPreviousRiverRacePeriodIndex == 6) {
 					const { data: currentRiverRaceData } = await riverRaceLogDataHelper.getRiverRaceLogData(clanTag);
-					const mostRecentEntryInRiverRaceLogs = currentRiverRaceData.data.items[0];
+					const mostRecentEntryInRiverRaceLogs = currentRiverRaceData.items[0];
 					const clanStandings = mostRecentEntryInRiverRaceLogs.standings.filter(clanStandingsElement => clanListCache.includes(clanStandingsElement.clan.tag));
 					if (clanStandings.length != 1) {
 						console.info(`${formattedCurrentTime} Skipping end of battle day data collection for ${clanTag}, getRiverRaceLogData clanStanding array doesn't have clan data`);

@@ -37,6 +37,7 @@ const getStartAndEndCollectionDataByPeriodIndex = async (database, clanTag, seas
 // generate report
 const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex) => {
 	try {
+		// TODO some validation because the flow didn't break here
 		const collectionData = await getStartAndEndCollectionDataByPeriodIndex(database, clanTag, seasonId, periodIndex, true);
 		if (!collectionData || !collectionData.success) {
 			throw 'get collection data was not successful';
@@ -85,7 +86,12 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 
 // save to DB
 const saveBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex, unusedDecksReport) => {
-	return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
+	if (unusedDecksReport)
+		return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
+	else {
+		console.error(`generate daily battle day report failed, save to DB clan tag (invalid report value): ${clanTag}`);
+		return false;
+	}
 };
 
 const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
@@ -109,7 +115,7 @@ const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
 	const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}`;
 	const reportField = `\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``;
 	const dailyReportEmbed = new MessageEmbed()
-		.setTitle(`Season ${seasonDetails.seasonId || 'NA'}|Week ${seasonDetails.sectionIndex + 1 || 'NA'}|Day ${(seasonDetails.periodIndex + 4) % 7 || 'NA'}`)
+		.setTitle(`Season ${seasonDetails.seasonId || 'NA'}|Week ${seasonDetails.sectionIndex + 1 || 'NA'}|Day ${(seasonDetails.periodIndex + 5) % 7 || 'NA'}`)
 		.setDescription('Daily missed battle day report')
 		.addField('Report', reportField, false)
 		.setTimestamp();
