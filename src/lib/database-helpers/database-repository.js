@@ -231,6 +231,14 @@ const getCurrentWarBattleDayParticipantDataByPeriodIndex = (database, clanTag, s
 	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
 };
 
+const getCurrentWarBattleDayParticipantDataByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
+};
+
 const setCurrentWarBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
 	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
 		.then(() => {
@@ -252,6 +260,14 @@ const getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex = (database, clanT
 	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
 };
 
+const getCurrentWarEndOfBattleDayParticipantDataByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
+};
+
 const setCurrentWarEndOfBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
 	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
 		.then(() => {
@@ -271,6 +287,14 @@ const getSeasonWiseBattleDayGeneratedReports = (clanTag, database) => {
 
 const getSeasonWiseBattleDayGeneratedReportsByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+};
+
+const getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
 };
 
 const setSeasonWiseBattleDayGeneratedReports = (clanTag, seasonId, periodIndex, data, database) => {
@@ -318,4 +342,7 @@ module.exports = {
 	getCurrentWarBattleDayParticipantDataByPeriodIndex,
 	getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex,
 	getSeasonWiseBattleDayGeneratedReportsByPeriodIndex,
+	getCurrentWarBattleDayParticipantDataByPeriodIndexRange,
+	getCurrentWarEndOfBattleDayParticipantDataByPeriodIndexRange,
+	getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange,
 };

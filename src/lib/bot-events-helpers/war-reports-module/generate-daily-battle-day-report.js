@@ -20,7 +20,7 @@ const getStartAndEndCollectionDataByPeriodIndex = async (database, clanTag, seas
 			getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex(database, clanTag, seasonId, periodIndex),
 		])).map(data => data.val());
 		const returnObject = {
-			success: true,
+			success: startOfDayData && endOfDayData,
 		};
 		if (isReturnDataAction) {
 			returnObject.startOfDayData = startOfDayData;
@@ -44,7 +44,7 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 		}
 		const { startOfDayData, endOfDayData } = collectionData;
 		if (startOfDayData.clanTag != endOfDayData.clanTag) {
-			throw 'not able to match clansin both snaps';
+			throw 'not able to match clans in both snaps';
 		}
 		// Generate Report
 		const unusedDecksReport = {
