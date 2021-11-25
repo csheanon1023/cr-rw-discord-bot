@@ -123,7 +123,7 @@ const generateSectionMissedDeckReport = async (database, clanTag, seasonId, sect
 		if (!participantList || !consolidatedUnusedDeckReport)
 			throw `Not able to generate participant list / consolidated report object clantag: ${clanTag}`;
 		Object.keys(participantList.participants).forEach(playerTag => {
-			participantList.participants[playerTag].unuesdDecks = consolidatedUnusedDeckReport?.[playerTag]?.totalUnusedDecks || 0;
+			participantList.participants[playerTag].unusedDecks = consolidatedUnusedDeckReport?.[playerTag]?.totalUnusedDecks || 0;
 		});
 		return participantList;
 	}
@@ -156,22 +156,19 @@ const sendBattleDayReport = async (client, pageKeys, unusedDecksReport, channelI
 	const listOfPlayersWithUnusedDeckCount = pageKeys.map(pageKey => ({
 		name: unusedDecksReport[pageKey].name,
 		unusedDecks: `${unusedDecksReport[pageKey].unusedDecks}/${unusedDecksReport[pageKey].totalAvailableDecks}`,
-		isInClan: currentClanMemberList.includes(`#${unusedDecksReport[pageKey].tag}`) ? 'Yes' : 'No',
+		isInClan: currentClanMemberList.includes(unusedDecksReport[pageKey].tag) ? 'Yes' : 'No',
 	}));
-	listOfPlayersWithUnusedDeckCount.sort((player1, player2) => {
-		if (player2.isInClan != player1.isInClan)
-			return parseInt(player2?.unuesdDecks?.split('/')[0]) - parseInt(player1?.unuesdDecks?.split('/')[0]);
-		return player1.isInClan == 'Yes' ? 1 : -1;
-	});
+	// // TODO Put this in generate and send with obj
+	// listOfPlayersWithUnusedDeckCount.sort((player1) => {
+	// 	return player1.isInClan == 'No' ? 1 : -1;
+	// });
+	// listOfPlayersWithUnusedDeckCount.sort((player1, player2) => {
+	// 	return parseInt(player2?.unusedDecks?.split('/')[0]) - parseInt(player1?.unusedDecks?.split('/')[0]);
+	// });
 	const tableHead = 'Player Name     UnusedDecks  In Clan';
 	const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
 	const formatPlayerReportData = (playerData) => `${removeEmojisFromString(playerData.name.length > 15 ? playerData.name.substring(0, 15) : playerData.name).padEnd(15)} ${(playerData.unusedDecks.toString()).padStart(11)}  ${(playerData.isInClan).padStart(7)}`;
-	const reportField = channel.send(`\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``)
-		.then(() => true)
-		.catch((e) => {
-			console.log(e);
-			return false;
-		});
+	const reportField = `\`\`\`\n${tableHead}\n${listOfPlayersWithUnusedDeckCount.map(formatPlayerReportData).join('\n')}\n\`\`\``;
 	const dailyReportEmbed = new MessageEmbed()
 		.setColor('#cc7900')
 		.setTitle(`Season ${seasonId || 'NA'}|Week ${sectionIndex + 1 || 'NA'}`)
@@ -270,13 +267,21 @@ const { connectRealtimeDatabase } = require('../../database-helpers/database-rep
 		// saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
 		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
 		const clanEndOfWeekRiverRaceReport = Object.values(unusedDecksReport.participants);
+		clanEndOfWeekRiverRaceReport.sort((player1) => {
+			return player1.isInClan == 'No' ? 1 : -1;
+		});
+		clanEndOfWeekRiverRaceReport.sort((player1, player2) => {
+			if (player2.isInClan == player1.isInClan)
+				return player2?.unusedDecks - player1?.unusedDecks;
+			return 0;
+		});
 		const allPagesKeys = Object.keys(clanEndOfWeekRiverRaceReport);
-		const numberOfPages = Math.ceil(allPagesKeys.length / 30);
+		const numberOfPages = Math.ceil(allPagesKeys.length / 15);
 		const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
 		for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
 			pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
 				if (flag) return;
-				flagsArray[i] = sendBattleDayReport(client, allPagesKeys.slice(30 * i, 30 * (i + 1)), clanEndOfWeekRiverRaceReport, channleIdByClan[clanTag], clanTag);
+				flagsArray[i] = sendBattleDayReport(client, allPagesKeys.slice(15 * i, 15 * (i + 1)), clanEndOfWeekRiverRaceReport, channleIdByClan[clanTag], clanTag);
 			});
 		}
 	}
