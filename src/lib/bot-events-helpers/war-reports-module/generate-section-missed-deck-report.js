@@ -14,10 +14,13 @@ const { MessageEmbed } = require('discord.js');
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
 
 // check if it is possible to generate a report
-const getStartAndEndCollectionDataBySectionIndex = async (database, clanTag, seasonId, sectionIndex, isReturnDataAction = true) => {
+const getStartAndEndCollectionDataBySectionIndex = async (database, clanTag, previousSeasonDetails, isReturnDataAction = true) => {
 	try {
+		const { seasonId, sectionIndex, periodIndex } = previousSeasonDetails;
 		const periodIndexStart = sectionIndex * 7;
-		const periodIndexEnd = (sectionIndex * 7) + 6;
+		const periodIndexEnd = periodIndex;
+		if (periodIndexEnd < periodIndexStart)
+			throw 'period index end is less than period index start';
 		const [startOfDayData, unusedDecksReport] = (await Promise.all([
 			getCurrentWarBattleDayParticipantDataByPeriodIndexRange(database, clanTag, seasonId, periodIndexStart, periodIndexEnd),
 			getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange(database, clanTag, seasonId, periodIndexStart, periodIndexEnd),
@@ -111,9 +114,10 @@ const createObjectOfAllParticipantsWithTotalUnusedDecks = async (unusedDecksRepo
 };
 
 // generate report
-const generateSectionMissedDeckReport = async (database, clanTag, seasonId, sectionIndex) => {
+const generateSectionMissedDeckReport = async (database, clanTag, previousSeasonDetails) => {
 	try {
-		const collectionData = await getStartAndEndCollectionDataBySectionIndex(database, clanTag, seasonId, sectionIndex, true);
+		const { seasonId, sectionIndex } = previousSeasonDetails;
+		const collectionData = await getStartAndEndCollectionDataBySectionIndex(database, clanTag, previousSeasonDetails, true);
 		if (!collectionData || !collectionData.success) {
 			throw 'get collection data was not successful';
 		}
@@ -143,12 +147,12 @@ const generateSectionMissedDeckReport = async (database, clanTag, seasonId, sect
 // 	}
 // };
 
-const sendBattleDayReport = async (client, pageKeys, unusedDecksReport, channelId, clanTag) => {
+const sendBattleDayReport = async (client, pageKeys, unusedDecksReport, channelId, clanTag, seasonId, sectionIndex) => {
 	// if (!pageKeys || pageKeys.length == 0 || !unusedDecksReport.unusedDecksReport || unusedDecksReport.unusedDecksReport.length == 0) {
 	// 	console.error('send action daily battle day report failed, unusedDecksReport not valid value');
 	// 	return false;
 	// }
-	const { seasonId, sectionIndex } = unusedDecksReport;
+	// const { seasonId, sectionIndex } = seasonDetails;
 	const channel = await client.channels.fetch(channelId);
 	const currentClanMemberList = (await membersDataHelper.getMembers(clanTag))?.data?.items?.map(member => member.tag);
 	// TODO fix sort, and put star in players who have left
@@ -175,7 +179,7 @@ const sendBattleDayReport = async (client, pageKeys, unusedDecksReport, channelI
 		.setDescription('Daily missed battle day report')
 		.addField('Report', reportField, false)
 		.setTimestamp();
-	channel.send(dailyReportEmbed)
+	return channel.send(dailyReportEmbed)
 		.then(() => true)
 		.catch((e) => {
 			console.error(`send action daily battle day report failed, send embed\n${e}`);
@@ -214,7 +218,7 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 					continue;
 				}
 				const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-				const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.sectionIndex);
+				const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
 				// isDailyBattleDayReportSaved[clanTag] ?
 				// 	console.log(`${formattedCurrentTime} Skipping river race report save to DB, report for ${clanTag} has already been saved`) :
 				// 	saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport).then(isSaved => {
@@ -263,10 +267,13 @@ const { connectRealtimeDatabase } = require('../../database-helpers/database-rep
 	const database = await connectRealtimeDatabase();
 	for (const clanTag of clanListCache) {
 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.sectionIndex);
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
 		// saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
 		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
-		const clanEndOfWeekRiverRaceReport = Object.values(unusedDecksReport.participants);
+		const currentClanMemberList = (await membersDataHelper.getMembers(clanTag))?.data?.items?.map(member => member.tag);
+		let clanEndOfWeekRiverRaceReport = Object.values(unusedDecksReport.participants);
+		clanEndOfWeekRiverRaceReport.forEach(player => player.isInClan = currentClanMemberList.includes(player.tag) ? 'Yes' : 'No');
+		clanEndOfWeekRiverRaceReport = clanEndOfWeekRiverRaceReport.filter(player => player.unusedDecks > 0);
 		clanEndOfWeekRiverRaceReport.sort((player1) => {
 			return player1.isInClan == 'No' ? 1 : -1;
 		});
@@ -279,10 +286,11 @@ const { connectRealtimeDatabase } = require('../../database-helpers/database-rep
 		const numberOfPages = Math.ceil(allPagesKeys.length / 15);
 		const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
 		for (let index = 0; pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && index < 5 ; index++) {
-			pageFlagsIsReportSentSuccessfully.forEach((flag, i, flagsArray) => {
+			for (let i in pageFlagsIsReportSentSuccessfully) {
+				let flag = pageFlagsIsReportSentSuccessfully[i];
 				if (flag) return;
-				flagsArray[i] = sendBattleDayReport(client, allPagesKeys.slice(15 * i, 15 * (i + 1)), clanEndOfWeekRiverRaceReport, channleIdByClan[clanTag], clanTag);
-			});
+				pageFlagsIsReportSentSuccessfully[i] = await sendBattleDayReport(client, allPagesKeys.slice(15 * i, 15 * (i + 1)), clanEndOfWeekRiverRaceReport, channleIdByClan[clanTag], clanTag, unusedDecksReport.seasonId, unusedDecksReport.sectionIndex);
+			}
 		}
 	}
 })();
