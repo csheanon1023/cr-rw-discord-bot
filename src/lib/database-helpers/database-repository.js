@@ -9,6 +9,9 @@ const DB_KEY_LAST_KNOWN_MEMBER_LIST_OBJECT = 'last-known-member-list';
 // Unused decks
 const DB_KEY_LAST_KNOWN_BATTLE_DAY_OBJECT = 'last-known-battle-day-data';
 const DB_KEY_CURRENT_WAR_MISSED_DECKS_OBJECT = 'current-war-missed-decks';
+const DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT = 'current-war-battle-day-initial-participant-data';
+const DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT = 'current-war-end-of-battle-day-participant-data';
+const DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT = 'season-wise-battle-day-generated-reports';
 // Discord - CR mapping
 const DB_KEY_PENDING_VERIFICATION_REQUESTS_OBJECT = 'pending-verification-requests';
 const DB_KEY_ALREADY_LINKED_PLAYER_TAGS_OBJECT = 'already-linked-player-tags';
@@ -219,6 +222,122 @@ const setkickingTeamMemberPendingKicksData = (clanTag, data, database) => {
 		});
 };
 
+// current-war-battle-day-initial-participant-data
+const getCurrentWarBattleDayParticipantData = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+const getCurrentWarBattleDayParticipantDataByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+};
+
+const getCurrentWarBattleDayParticipantDataByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
+};
+
+const setCurrentWarBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_BATTLE_DAY_INITIAL_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+		.then(() => {
+			console.info(`Data saved successfully. Key:current-war-battle-day-initial-participant-data ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex}`);
+			return true;
+		})
+		.catch(error => {
+			console.error(`Data could not be saved. Key:current-war-battle-day-initial-participant-data ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex} \nerror: ${error}`);
+			return false;
+		});
+};
+
+// current-war-end-of-battle-day-participant-data
+const getCurrentWarEndOfBattleDayParticipantData = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+const getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+};
+
+const getCurrentWarEndOfBattleDayParticipantDataByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
+};
+
+const setCurrentWarEndOfBattleDayParticipantData = (clanTag, seasonId, periodIndex, data, database) => {
+	return database.ref(`/${DB_KEY_CURRENT_WAR_END_OF_BATTLE_DAY_PARTICIPANT_DATA_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+		.then(() => {
+			console.info(`Data saved successfully. Key:current-war-end-of-battle-day-participant-data ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex}`);
+			return true;
+		})
+		.catch(error => {
+			console.error(`Data could not be saved. Key:current-war-end-of-battle-day-participant-data ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex} \nerror: ${error}`);
+			return false;
+		});
+};
+
+// season-wise-battle-day-generated-reports
+const getSeasonWiseBattleDayGeneratedReports = (clanTag, database) => {
+	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}`).once('value');
+};
+
+const getSeasonWiseBattleDayGeneratedReportsByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
+	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+};
+
+const getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+		.orderByKey()
+		.startAt(periodIndexStart.toString())
+		.endAt(periodIndexEnd.toString())
+		.once('value');
+};
+
+const setSeasonWiseBattleDayGeneratedReports = (clanTag, seasonId, periodIndex, data, database) => {
+	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+		.then(() => {
+			console.info(`Data saved successfully. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex}`);
+			return true;
+		})
+		.catch(error => {
+			console.error(`Data could not be saved. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex} \nerror: ${error}`);
+			return false;
+		});
+};
+
+// // season-wise-battle-day-generated-reports
+// const getSeasonWiseBattleDayGeneratedReports = (clanTag, database) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}`).once('value');
+// };
+
+// const getSeasonWiseBattleDayGeneratedReportsByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+// };
+
+// const getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+// 		.orderByKey()
+// 		.startAt(periodIndexStart.toString())
+// 		.endAt(periodIndexEnd.toString())
+// 		.once('value');
+// };
+
+// const setSeasonWiseBattleDayGeneratedReports = (clanTag, seasonId, periodIndex, data, database) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+// 		.then(() => {
+// 			console.info(`Data saved successfully. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex}`);
+// 			return true;
+// 		})
+// 		.catch(error => {
+// 			console.error(`Data could not be saved. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex} \nerror: ${error}`);
+// 			return false;
+// 		});
+// };
+
 module.exports = {
 	connectRealtimeDatabase,
 	getLastKnownMembersListData,
@@ -243,4 +362,16 @@ module.exports = {
 	getkickingTeamMemberPendingKicksByClanData,
 	getkickingTeamMemberPendingKicksData,
 	setkickingTeamMemberPendingKicksData,
+	getCurrentWarBattleDayParticipantData,
+	setCurrentWarBattleDayParticipantData,
+	getCurrentWarEndOfBattleDayParticipantData,
+	setCurrentWarEndOfBattleDayParticipantData,
+	getSeasonWiseBattleDayGeneratedReports,
+	setSeasonWiseBattleDayGeneratedReports,
+	getCurrentWarBattleDayParticipantDataByPeriodIndex,
+	getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex,
+	getSeasonWiseBattleDayGeneratedReportsByPeriodIndex,
+	getCurrentWarBattleDayParticipantDataByPeriodIndexRange,
+	getCurrentWarEndOfBattleDayParticipantDataByPeriodIndexRange,
+	getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange,
 };

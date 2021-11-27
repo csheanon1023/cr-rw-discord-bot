@@ -21,4 +21,4 @@ To use this code, follow the instructions:
 
 # Notes
 
-- Keep in mind all of the role IDs, channel IDs, etc. were all for my test server. You must configure it yourself by changing the IDs to meet your needs.
+- Keep in mind all of the role IDs, channel IDs, etc. were all for my staging server. You must configure it yourself by changing the IDs to meet your needs.
