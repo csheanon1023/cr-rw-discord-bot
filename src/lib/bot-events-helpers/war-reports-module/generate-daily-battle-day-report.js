@@ -116,7 +116,7 @@ const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
 	const dailyReportEmbed = new MessageEmbed()
 		.setColor('#cc7900')
 		.setTitle(`Season ${seasonDetails.seasonId || 'NA'}|Week ${seasonDetails.sectionIndex + 1 || 'NA'}|Day ${(seasonDetails.periodIndex + 5) % 7 || 'NA'}`)
-		.setDescription('Daily missed battle day report')
+		.setDescription('Daily unused decks report report')
 		.addField('Report', reportField, false)
 		.setTimestamp();
 	channel.send(dailyReportEmbed)

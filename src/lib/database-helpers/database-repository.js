@@ -309,6 +309,35 @@ const setSeasonWiseBattleDayGeneratedReports = (clanTag, seasonId, periodIndex, 
 		});
 };
 
+// // season-wise-battle-day-generated-reports
+// const getSeasonWiseBattleDayGeneratedReports = (clanTag, database) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}`).once('value');
+// };
+
+// const getSeasonWiseBattleDayGeneratedReportsByPeriodIndex = (database, clanTag, seasonId, periodIndex) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).once('value');
+// };
+
+// const getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange = (database, clanTag, seasonId, periodIndexStart, periodIndexEnd) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}`)
+// 		.orderByKey()
+// 		.startAt(periodIndexStart.toString())
+// 		.endAt(periodIndexEnd.toString())
+// 		.once('value');
+// };
+
+// const setSeasonWiseBattleDayGeneratedReports = (clanTag, seasonId, periodIndex, data, database) => {
+// 	return database.ref(`/${DB_KEY_SEASON_WISE_BATTLE_DAY_GENERATED_REPORTS_OBJECT}/${clanTag.substring(1)}/${seasonId}/${periodIndex}`).set(data)
+// 		.then(() => {
+// 			console.info(`Data saved successfully. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex}`);
+// 			return true;
+// 		})
+// 		.catch(error => {
+// 			console.error(`Data could not be saved. Key:season-wise-battle-day-generated-reports ClanTag:${clanTag} seasonId:${seasonId} periodIndex:${periodIndex} \nerror: ${error}`);
+// 			return false;
+// 		});
+// };
+
 module.exports = {
 	connectRealtimeDatabase,
 	getLastKnownMembersListData,

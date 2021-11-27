@@ -11,6 +11,7 @@ const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-jo
 const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-battle-day-initial-participant-data');
 const collectEndOfBattleDayParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-end-of-battle-day-participant-data');
 const generateDailyBattleDayReport = require('./lib/bot-events-helpers/war-reports-module/generate-daily-battle-day-report');
+const { triggerCurrentRiverRaceReport } = require('./lib/bot-events-helpers/war-reports-module/generate-section-missed-deck-report');
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
 
@@ -71,6 +72,7 @@ case 'production' :
 		isCollectBattleDayInitialParticipantDataEnabled: false,
 		isCollectEndOfBattleDayParticipantDataEnabled: false,
 		isGenerateDailyBattleDayReportEnabled: false,
+		isCurrentRaceConsolidatedReportCommandEnabled: false,
 	};
 	break;
 case 'staging':
@@ -92,6 +94,7 @@ case 'staging':
 		isCollectBattleDayInitialParticipantDataEnabled: true,
 		isCollectEndOfBattleDayParticipantDataEnabled: true,
 		isGenerateDailyBattleDayReportEnabled: true,
+		isCurrentRaceConsolidatedReportCommandEnabled: true,
 	};
 	break;
 case 'dev':
@@ -113,6 +116,7 @@ case 'dev':
 		isCollectBattleDayInitialParticipantDataEnabled: true,
 		isCollectEndOfBattleDayParticipantDataEnabled: true,
 		isGenerateDailyBattleDayReportEnabled: true,
+		isCurrentRaceConsolidatedReportCommandEnabled: true,
 	};
 	break;
 default:
@@ -134,6 +138,7 @@ default:
 		isCollectBattleDayInitialParticipantDataEnabled: false,
 		isCollectEndOfBattleDayParticipantDataEnabled: false,
 		isGenerateDailyBattleDayReportEnabled: false,
+		isCurrentRaceConsolidatedReportCommandEnabled: false,
 	};
 }
 
@@ -158,6 +163,11 @@ client.on('message', async (message) => {
 			.split(/\s+/);
 		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isByLevelCommandEnabled && CMD_NAME === 'bylevel') {
 			warTeamEvents.getMembersByLevel(message, args, [COLEADER_ROLE_ID, LEADER_ROLE_ID, TEST_ROLE_ID]);
+			return;
+		}
+
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCurrentRaceConsolidatedReportCommandEnabled && CMD_NAME === 'racereport') {
+			triggerCurrentRiverRaceReport(message, args, database, [COLEADER_ROLE_ID, LEADER_ROLE_ID], CLAN_WISE_CHANNEL_IDS);
 			return;
 		}
 
