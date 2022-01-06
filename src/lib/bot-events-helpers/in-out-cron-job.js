@@ -174,8 +174,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const playerJoinedEmbed = new MessageEmbed()
 				.setTitle(`[${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'}`)
 				.addFields(
-					{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
-					{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
+					{ name: 'King Level', value: `${playerDetails.expLevel ?? 'Player Level NA'}`, inline: true },
+					{ name: 'Current Trophies', value: `${playerDetails.trophies ?? 'Player Trophies NA'}`, inline: true },
 				)
 				.setURL(`${ROYALE_API_BASE_URL}player/${playerTag.substring(1)}`)
 				.setTimestamp();
@@ -304,8 +304,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			const channel = await client.channels.fetch(channelIds[channelIdKey]);
 			const playerLeftEmbed = new MessageEmbed()
 				.addFields(
-					{ name: 'King Level', value: `${playerDetails.expLevel || 'Player Level NA'}`, inline: true },
-					{ name: 'Current Trophies', value: `${playerDetails.trophies || 'Player Trophies NA'}`, inline: true },
+					{ name: 'King Level', value: `${playerDetails.expLevel ?? 'Player Level NA'}`, inline: true },
+					{ name: 'Current Trophies', value: `${playerDetails.trophies ?? 'Player Trophies NA'}`, inline: true },
 				)
 				.setColor(embedBannerColours.COLOUR_RED)
 				.setTitle(`[${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}] -> ${playerDetails.name || 'Player Name NA'} (Kicked by: NA)`)
@@ -417,7 +417,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 							// { name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							// { name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							// { name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
-							{ name: 'Timeline of last 10 records', value: timeline, inline: false },
+							{ name: 'Timeline of contributed races', value: timeline, inline: false },
 							// { name: 'Recommended action (*not reliable for stale timelines)', value: recommendationMessage, inline: false },
 						);
 
@@ -428,8 +428,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 						if (sections.length == 0)
 							return;
 						playerLeftEmbed.addField(
-							`${seasonStats} [${sections.map(s => `${s + 1} (${seasonStats?.[s]?.timePassed || 'NA'}`)?.join(', ')}]`,
-							sections.map(s => `${seasonStats?.[s]?.fame || 'NA'}(${seasonStats?.[s]?.decksUsed || 'NA'})`)?.join(', '),
+							`${seasonStats} [${sections.map(s => `${Number(s) + 1} (${groupedSeasonStats[seasonStats]?.[s]?.timePassed ?? 'NA'})`)?.join(', ')}]`,
+							sections.map(s => `${groupedSeasonStats[seasonStats]?.[s]?.fame ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.join(', '),
 							false,
 						);
 					});
@@ -444,7 +444,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 			console.log(`${playerDetails.name} has left ${clanCodeByKeyCache[clanTag.substring(1)] || 'Clan Code NA'}`);
 		}
 		catch (error) {
-			console.error('in log send embed failed\nerror:' + error);
+			console.error('out log send embed failed\nerror:' + error);
 			console.info(`Params: change:Left;playerTag:${playerTag};clanTag:${clanTag}` + error);
 			return false;
 		}
