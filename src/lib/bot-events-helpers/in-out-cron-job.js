@@ -227,6 +227,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 						return Math.floor(timePassed) == 0 ? `${Math.floor(timePassed * 7)}d` : `${Math.round(timePassed)}w`;
 					};
 					const timeline = clanWar2History.rows
+						.slice(0, 10)
 						.map(raceStats => mapToTimelineElement(raceStats.log_created_date_dt * 1000, date))
 						.join(', ');
 
