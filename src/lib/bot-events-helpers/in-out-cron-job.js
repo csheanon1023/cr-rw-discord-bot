@@ -189,7 +189,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 							{ name: 'CW2 Last 10', value: 'NA(0)', inline: true },
 							{ name: 'CW2 Best 10', value: 'NA(0)', inline: true },
 							{ name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
-							{ name: 'Recommended action', value: 'We don\'t have enough data on this player to make a prediction.', inline: false },
+							{ name: 'Recommended action (*not reliable for stale timelines)', value: 'We don\'t have enough data on this player to make a prediction.', inline: false },
 						);
 					console.error(`In log, get clan war 2 history succeeded but success flag is false or data is empty status:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
 				}
@@ -218,6 +218,17 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					const worstTenTotalRecordsFound = worstTenContributions.length;
 					const worstTenTotalFame = worstTenContributions.reduce((sum, fame) => sum + fame, 0);
 					const worstTenOverallAverage = Math.ceil(worstTenTotalFame / worstTenTotalRecordsFound);
+
+					// Timeline of last 10 records
+					const date = Date.now();
+					const mapToTimelineElement = (msTimestamp, currentTimestamp) => {
+						const timePassed = (currentTimestamp - msTimestamp) / 604800000;
+						if (timePassed < 0) return '0d';
+						return Math.floor(timePassed) == 0 ? `${Math.floor(timePassed * 7)}d` : `${Math.round(timePassed)}w`;
+					};
+					const timeline = clanWar2History.rows
+						.map(raceStats => mapToTimelineElement(raceStats.log_created_date_dt * 1000, date))
+						.join(', ');
 
 					// Find correct banner colour and recommendation message
 					let bannerColour = embedBannerColours.COLOUR_DEFAULT;
@@ -262,7 +273,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 							{ name: 'CW2 Last 10', value: lastTenTotalRecordsFound != 0 ? `${lastTenOverallAverage} (${lastTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
-							{ name: 'Recommended action', value: recommendationMessage, inline: false },
+							{ name: 'Timeline of last 10 records', value: timeline, inline: false },
+							{ name: 'Recommended action (*not reliable for stale timelines)', value: recommendationMessage, inline: false },
 						);
 				}
 			}
