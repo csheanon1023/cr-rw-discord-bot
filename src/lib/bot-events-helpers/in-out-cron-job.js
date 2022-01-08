@@ -224,7 +224,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					const date = Date.now();
 					const timeline = clanWar2History.rows
 						.slice(0, 10)
-						.map(raceStats => `${raceStats.fame || raceStats.contribution}(${timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date) || 'NA'})`)
+						.map(raceStats => `${raceStats.fame || raceStats.contribution || 'NA'}(${timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date) || 'NA'})`)
 						.join(', ');
 
 					// Find correct banner colour and recommendation message
