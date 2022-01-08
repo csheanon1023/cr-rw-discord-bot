@@ -224,7 +224,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					const date = Date.now();
 					const timeline = clanWar2History.rows
 						.slice(0, 10)
-						.map(raceStats => timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date))
+						.map(raceStats => `${raceStats.fame || raceStats.contribution}(${timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date) || 'NA'})`)
 						.join(', ');
 
 					// Find correct banner colour and recommendation message
@@ -315,16 +315,16 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 			const clanWar2History = await getClanWars2History(rApiToken, playerTag, playerDetails.name);
 			if (clanWar2History) {
-				if (!clanWar2History.success || clanWar2History.rows.length == 0) {
+				if (!clanWar2History.success || clanWar2History.rows.length == 0 || !clanWar2History.rows.some(rs => rs.clan_tag == clanTag.substring(1))) {
 					playerLeftEmbed
 						.addFields(
-							{ name: 'Races', value: 'NA', inline: true },
+							{ name: 'Races', value: `${clanWar2History.rows.length ? 'NA' : '0'}`, inline: true },
 							// { name: 'CW2 Last 10', value: 'NA(0)', inline: true },
 							// { name: 'CW2 Best 10', value: 'NA(0)', inline: true },
 							// { name: 'CW2 Worst 10', value: 'NA(0)', inline: true },
 							// { name: 'Recommended action (*not reliable for stale timelines)', value: 'We don\'t have enough data on this player to make a prediction.', inline: false },
 						);
-					console.error(`Out log, get clan war 2 history succeeded but success flag is false or data is empty status:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
+					clanWar2History.success || console.error(`Out log, get clan war 2 history succeeded but success flag is:${clanWar2History.success}, rows: ${clanWar2History.rows.length}, pTag: ${playerTag}`);
 				}
 
 				else {
