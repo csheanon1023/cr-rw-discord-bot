@@ -22,7 +22,7 @@ const CURRENT_CHEST_TYPES = {
 	'Lightning_Chest': '901911639979348099',
 	'Info_Icon_For_Undefined': '893819306763239524',
 	'Royal_Wild_Chest': '929416164365467729',
-	'Overflowing_Gold_Crate': '901911639694119012'
+	'Overflowing_Gold_Crate': '901911639694119012',
 };
 
 const sendChestsEmbed = async (message, playerTag, upcomingChestsData) => {
