@@ -6,8 +6,8 @@ const royaleApiTokenHelper = require('../scraping-helpers/royale-api-token-helpe
 const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wars2-history-helper');
 const { timePassedBetweenTwoMillisecondTimestamps } = require('../utils/dateTimeUtils');
 
-const clanListCache = [ '#2PYUJUL' ];
-// const clanListCache = [ '#P9QQVJVG' ];
+// const clanListCache = [ '#2PYUJUL' ];
+const clanListCache = [ '#P9QQVJVG' ];
 // const clanNameByKeyCache = {
 // 	'#2PYUJUL': 'ROYAL WARRIORS!',
 // 	'#P9QQVJVG': 'HARAMI_CLASHERS',
@@ -134,6 +134,51 @@ const sendInEmbed = async (playerTag, clanTag, client, channelIds) => {
 						{ name: 'Timeline of last 10 records', value: timeline, inline: false },
 						{ name: 'Recommended action (*not reliable for stale timelines)', value: recommendationMessage, inline: false },
 					);
+
+				// Left
+				if (!(!clanWar2History.success || clanWar2History.rows.length == 0 || !clanWar2History.rows.some(rs => rs.clan_tag == clanTag.substring(1)))) {
+
+					const filteredClanWar2History = clanWar2History.rows
+						.filter(raceStats => raceStats.clan_tag == clanTag.substring(1));
+					const totalRecordsFoundLeft = filteredClanWar2History.length;
+					const timelineLeft = filteredClanWar2History
+						// .slice(0, 10)
+						.map(raceStats => timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date))
+						.join(', ');
+
+					// Group by Seasons
+					const groupBySeasons = (warHistory) => {
+						return warHistory.reduce((acc, raceStats) => {
+							if (!(raceStats.season_id in acc))
+								acc[raceStats.season_id] = {};
+							acc[raceStats.season_id][raceStats.section_index] = {
+								fame: raceStats.fame,
+								decksUsed: raceStats.decks_used,
+								timePassed: timePassedBetweenTwoMillisecondTimestamps(raceStats.log_created_date_dt * 1000, date),
+							};
+							return acc;
+						}, {});
+					};
+
+					playerJoinedEmbed
+						.addFields(
+							{ name: 'Races', value: totalRecordsFoundLeft, inline: true },
+							{ name: 'Timeline of contributed races', value: timelineLeft, inline: false },
+						);
+
+					const groupedSeasonStats = groupBySeasons(filteredClanWar2History);
+					const latestFiveSeasonStats = Object.keys(groupedSeasonStats).sort((a, b) => b - a).slice(0, 5);
+					latestFiveSeasonStats?.forEach(seasonStats => {
+						const sections = Object.keys(groupedSeasonStats[seasonStats]);
+						if (sections.length == 0)
+							return;
+						playerJoinedEmbed.addField(
+							`${seasonStats} [${sections.map(s => `${Number(s) + 1} (${groupedSeasonStats[seasonStats]?.[s]?.timePassed ?? 'NA'})`)?.join(', ')}]`,
+							sections.map(s => `${groupedSeasonStats[seasonStats]?.[s]?.fame ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.join(', '),
+							false,
+						);
+					});
+				}
 			}
 		}
 		else {

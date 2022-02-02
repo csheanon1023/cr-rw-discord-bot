@@ -6,8 +6,8 @@ const playerVerificationCommand = require('./lib/bot-events-helpers/player-verif
 const upcomingChestsCommand = require('./lib/bot-events-helpers/upcoming-chests-command');
 const databaseRepository = require('./lib/database-helpers/database-repository');
 const inOutCronJob = require('./lib/bot-events-helpers/in-out-cron-job');
-const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
-const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-job');
+// const checkMissedBattleDayDecksCronJob = require('./lib/bot-events-helpers/check-missed-battle-day-decks-cron-job');
+// const toKickListCronJob = require('./lib/bot-events-helpers/to-kick-list-cron-job');
 const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-battle-day-initial-participant-data');
 const collectEndOfBattleDayParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-end-of-battle-day-participant-data');
 const generateDailyBattleDayReport = require('./lib/bot-events-helpers/war-reports-module/generate-daily-battle-day-report');
@@ -27,9 +27,11 @@ const PREFIX = '$';
 // const CLAN2_CHAT_CHANNEL_ID = '886248413769895987';
 const CLAN1_CHAT_CHANNEL_ID = '873489644753420328';
 const CLAN2_CHAT_CHANNEL_ID = '873489702286655508';
+const CLAN3_CHAT_CHANNEL_ID = '931233402428985398';
 const LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID = '899384962128707616';
 const CLAN1_ROLE_ID = '873489388338810921';
 const CLAN2_ROLE_ID = '873489468466823218';
+const CLAN3_ROLE_ID = '931235875319332885';
 const SELF_ROLE_MESSAGE_ID = '874040719495544862';
 const COLEADER_ROLE_ID = '814834289613996082';
 const LEADER_ROLE_ID = '815152089201246244';
@@ -41,15 +43,25 @@ const IN_OUT_LOG_CHANNEL_IDS = {
 	OUT_LOG_CHANNEL_ID_RW: '903345957557633114',
 	IN_LOG_CHANNEL_ID_HC: '907336661451546725',
 	OUT_LOG_CHANNEL_ID_HC: '907336720662548531',
+	IN_LOG_CHANNEL_ID_NOVA: '931233452253138994',
+	OUT_LOG_CHANNEL_ID_NOVA: '931233487510454292',
 };
 const CLAN_WISE_CHANNEL_IDS = {
 	'#2PYUJUL': CLAN1_CHAT_CHANNEL_ID,
 	'#P9QQVJVG': CLAN2_CHAT_CHANNEL_ID,
+	'#QRVUCJVP': CLAN3_CHAT_CHANNEL_ID,
 };
 const CLAN_WISE_ROLE_IDS = {
 	'#2PYUJUL': CLAN1_ROLE_ID,
 	'#P9QQVJVG': CLAN2_ROLE_ID,
+	'#QRVUCJVP': CLAN3_ROLE_ID,
 };
+
+// const TEMP_CHANNEL_IDS = {
+// 	'#2PYUJUL': '904461174664470628',
+// 	'#P9QQVJVG': '904472570135457853',
+// 	'#QRVUCJVP': '931255639202746368',
+// };
 
 let ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {};
 switch (process.env.ENVIRONMENT_TYPE) {
@@ -206,10 +218,10 @@ client.login(process.env.DISCORDJS_BOT_TOKEN);
 
 // Start CRON Jobs
 Object.values(IN_OUT_LOGS_FLAG_COLLECTION).reduce((isEnabled, flag) => isEnabled || flag, false) && inOutCronJob.startInOutLogCronEachMinute(database, client, IN_OUT_LOG_CHANNEL_IDS, IN_OUT_LOGS_FLAG_COLLECTION);
-ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
-ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, { '#2PYUJUL': '904461174664470628', '#P9QQVJVG': '904472570135457853' }, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
-ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, { '#2PYUJUL': '904461174664470628', '#P9QQVJVG': '904472570135457853' }, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
-ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isToKickListCronEnabled && toKickListCronJob.scheduleCronToRefreshKickingBoardData(database, client);
+// ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectDailyRiverRaceDataEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToCollectRiverRaceData(database);
+// ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateDailyUnusedDecksReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateDailyMissedBattleDecksReport(database, client, TEMP_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionDailyUnusedDecksReportEnabled);
+// ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isGenerateEndOfRiverRaceReportEnabled && checkMissedBattleDayDecksCronJob.scheduleCronToGenerateEndOfRaceMissedBattleDecksReport(database, client, TEMP_CHANNEL_IDS, ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isSendActionEndOfRiverRaceReportEnabled);
+// ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isToKickListCronEnabled && toKickListCronJob.scheduleCronToRefreshKickingBoardData(database, client);
 
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectBattleDayInitialParticipantDataEnabled && collectBattleDayInitialParticipantData.scheduleCronToCollectBattleDayInitialParticipantData(database);
 ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isCollectEndOfBattleDayParticipantDataEnabled && collectEndOfBattleDayParticipantData.scheduleCronToCollectEndOfBattleDayParticipantData(database);
