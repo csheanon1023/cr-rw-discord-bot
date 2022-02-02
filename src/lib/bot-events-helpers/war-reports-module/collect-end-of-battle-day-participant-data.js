@@ -6,7 +6,7 @@ const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../../u
 const cron = require('node-cron');
 const { getCurrentTime } = require('../../utils/dateTimeUtils');
 
-const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
+const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
 
 const scheduleCronToCollectEndOfBattleDayParticipantData = (database) => {
 	let isEndOfBattleDayParticipantDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
