@@ -9,7 +9,7 @@ const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wa
 const { timePassedBetweenTwoMillisecondTimestamps } = require('../utils/dateTimeUtils');
 
 exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
-	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
+	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
 	let clanMembersCache = [];
 	let lastInOutCronSuccessTimestamp = -1;
 	// const clanNameByKeyCache = {
@@ -19,6 +19,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 	const clanCodeByKeyCache = {
 		'2PYUJUL': 'RW',
 		'P9QQVJVG': 'HC',
+		'QRVUCJVP': 'NOVA',
 	};
 	const embedBannerColours = {
 		COLOUR_ORANGE: '#f56200',

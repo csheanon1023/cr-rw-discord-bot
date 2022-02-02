@@ -10,7 +10,7 @@ const cron = require('node-cron');
 const { getCurrentTime } = require('../../utils/dateTimeUtils');
 const { MessageEmbed } = require('discord.js');
 
-const clanListCache = [ '#2PYUJUL', '#P9QQVJVG' ];
+const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
 
 // check if it is possible to generate a report
 const getStartAndEndCollectionDataByPeriodIndex = async (database, clanTag, seasonId, periodIndex, isReturnDataAction = true) => {

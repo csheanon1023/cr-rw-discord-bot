@@ -22,6 +22,16 @@ exports.handleRoleAdd = (reaction, user, roleIds) => {
 				console.log(`Failed to add clan 2 role to ${user.username}`);
 			});
 		break;
+	case '3️⃣':
+		member.roles.add(roleIds['#QRVUCJVP'])
+			.then(({ user: userDetails }) => {
+				console.log(`added role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#QRVUCJVP']).name} to ${userDetails.username}`);
+			})
+			.catch((e) => {
+				console.error(e);
+				console.log(`Failed to add clan 3 role to ${user.username}`);
+			});
+		break;
 	}
 };
 
@@ -47,6 +57,16 @@ exports.handleRoleRemove = (reaction, user, roleIds) => {
 			.catch((e) => {
 				console.error(e);
 				console.log(`Failed to remove clan 2 role from ${user.username}`);
+			});
+		break;
+	case '3️⃣':
+		member.roles.remove(roleIds['#QRVUCJVP'])
+			.then(({ user: userDetails }) => {
+				console.log(`removed role ${reaction.message.guild.roles.cache.find(r => r.id === roleIds['#QRVUCJVP']).name} from ${userDetails.username}`);
+			})
+			.catch((e) => {
+				console.error(e);
+				console.log(`Failed to remove clan 3 role from ${user.username}`);
 			});
 		break;
 	}
