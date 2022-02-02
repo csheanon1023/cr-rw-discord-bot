@@ -5,6 +5,7 @@ exports.getMembersByLevel = async (message, args, accessLevel) => {
 	const clanCodes = {
 		'rw': '#2PYUJUL',
 		'hc': '#P9QQVJVG',
+		'nova': '#QRVUCJVP',
 	};
 	const memberRoles = await message.member.roles.cache;
 	let flag = false;
