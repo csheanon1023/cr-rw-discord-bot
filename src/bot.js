@@ -203,12 +203,12 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isUpcomingChestsCommandEnabled && CMD_NAME === 'scrape' && message.channel.id === '901901247626489917') {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isUpcomingChestsCommandEnabled && CMD_NAME === 'chests' && message.channel.id === '901901247626489917') {
 			upcomingChestsCommand.upcomingChestsOrFault(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'chests' && message.author.id === '353463252883210240' && tempChannelIds.includes(message.author.id)) {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && message.author.id === '353463252883210240' && tempChannelIds.includes(message.author.id)) {
 			tempScrapeCommand.scrapeAndSendRecords(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
 			return;
 		}
