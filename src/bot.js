@@ -12,6 +12,7 @@ const collectBattleDayInitialParticipantData = require('./lib/bot-events-helpers
 const collectEndOfBattleDayParticipantData = require('./lib/bot-events-helpers/war-reports-module/collect-end-of-battle-day-participant-data');
 const generateDailyBattleDayReport = require('./lib/bot-events-helpers/war-reports-module/generate-daily-battle-day-report');
 const { triggerCurrentRiverRaceReport } = require('./lib/bot-events-helpers/war-reports-module/generate-section-missed-deck-report');
+const tempScrapeCommand = require('./lib/bot-events-helpers/temp-command-send-cw2-history');
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
 
@@ -63,6 +64,12 @@ const CLAN_WISE_ROLE_IDS = {
 // 	'#QRVUCJVP': '931255639202746368',
 // };
 
+const tempChannelIds = [
+	'904461174664470628',
+	'904472570135457853',
+	'931255639202746368',
+];
+
 let ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = {};
 switch (process.env.ENVIRONMENT_TYPE) {
 case 'production' :
@@ -86,6 +93,7 @@ case 'production' :
 		isGenerateDailyBattleDayReportEnabled: false,
 		isSendActionDailyBattleDayReportEnabled: false,
 		isCurrentRaceConsolidatedReportCommandEnabled: false,
+		isTempScrapeCommandEnabled: true,
 	};
 	break;
 case 'staging':
@@ -109,6 +117,7 @@ case 'staging':
 		isGenerateDailyBattleDayReportEnabled: true,
 		isSendActionDailyBattleDayReportEnabled: true,
 		isCurrentRaceConsolidatedReportCommandEnabled: true,
+		isTempScrapeCommandEnabled: false,
 	};
 	break;
 case 'dev':
@@ -132,6 +141,7 @@ case 'dev':
 		isGenerateDailyBattleDayReportEnabled: true,
 		isSendActionDailyBattleDayReportEnabled: true,
 		isCurrentRaceConsolidatedReportCommandEnabled: true,
+		isTempScrapeCommandEnabled: false,
 	};
 	break;
 default:
@@ -155,6 +165,7 @@ default:
 		isGenerateDailyBattleDayReportEnabled: false,
 		isSendActionDailyBattleDayReportEnabled: false,
 		isCurrentRaceConsolidatedReportCommandEnabled: false,
+		isTempScrapeCommandEnabled: false,
 	};
 }
 
@@ -192,8 +203,13 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isUpcomingChestsCommandEnabled && CMD_NAME === 'chests' && message.channel.id === '901901247626489917') {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isUpcomingChestsCommandEnabled && CMD_NAME === 'scrape' && message.channel.id === '901901247626489917') {
 			upcomingChestsCommand.upcomingChestsOrFault(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
+			return;
+		}
+
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'chests' && message.author.id === '353463252883210240' && tempChannelIds.includes(message.author.id)) {
+			tempScrapeCommand.scrapeAndSendRecords(message, args, database, LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID);
 			return;
 		}
 	}

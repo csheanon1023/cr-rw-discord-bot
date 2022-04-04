@@ -7,7 +7,7 @@ const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wa
 const { timePassedBetweenTwoMillisecondTimestamps } = require('../utils/dateTimeUtils');
 
 // const clanListCache = [ '#2PYUJUL' ];
-const clanListCache = [ '#P9QQVJVG' ];
+// const clanListCache = [ '#P9QQVJVG' ];
 // const clanListCache = [ '#QRVUCJVP' ];
 // const clanNameByKeyCache = {
 // 	'#2PYUJUL': 'ROYAL WARRIORS!',
@@ -221,31 +221,33 @@ const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
 	}
 };
 
-const { Client } = require('discord.js');
-
-(async () => {
-	const client = new Client({
-		partials: ['MESSAGE', 'REACTION'],
-	});
-	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+exports.scrapeAndSendRecords = async (message) => {
 	const channleIdByClan = {
 		'#2PYUJUL': '904461174664470628',
 		'#P9QQVJVG': '904472570135457853',
 		'#QRVUCJVP': '931255639202746368',
 	};
 
-	for (const clanTag of clanListCache) {
-		let offset = 0;
-		const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
-		const members = memberListData.items;
-		for (const { tag } of members) {
-			offset += Math.floor((Math.random() * 100) % 6);
-			const channelIds = {
-				IN_LOG_CHANNEL_ID_RW : channleIdByClan[clanTag],
-				IN_LOG_CHANNEL_ID_HC : channleIdByClan[clanTag],
-				IN_LOG_CHANNEL_ID_NOVA : channleIdByClan[clanTag],
-			};
-			setTimeout(() => sendInEmbed(tag, clanTag, client, channelIds), offset * 1000);
-		}
+	const clanTagByChannelId = {
+		'904461174664470628': '#2PYUJUL',
+		'904472570135457853': '#P9QQVJVG',
+		'931255639202746368': '#QRVUCJVP',
+	};
+
+	const clanTag = clanTagByChannelId[message?.channel?.id];
+	if (!clanTag)
+		return;
+
+	let offset = 0;
+	const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
+	const members = memberListData.items;
+	for (const { tag } of members) {
+		offset += Math.floor((Math.random() * 100) % 6);
+		const channelIds = {
+			IN_LOG_CHANNEL_ID_RW : channleIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_HC : channleIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_NOVA : channleIdByClan[clanTag],
+		};
+		setTimeout(() => sendInEmbed(tag, clanTag, message.client, channelIds), offset * 1000);
 	}
-})();
+};
