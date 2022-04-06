@@ -208,7 +208,7 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && message.author.id === '353463252883210240' && tempChannelIds.includes(message.author.id)) {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && message.author.id === '353463252883210240' && tempChannelIds.includes(message.channel.id)) {
 			tempScrapeCommand.scrapeAndSendRecords(message, args);
 			return;
 		}
