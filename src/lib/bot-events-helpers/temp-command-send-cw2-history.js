@@ -221,7 +221,7 @@ const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
 	}
 };
 
-exports.scrapeAndSendRecords = async (message) => {
+exports.scrapeAndSendRecords = async (message, args) => {
 	const channleIdByClan = {
 		'#2PYUJUL': '904461174664470628',
 		'#P9QQVJVG': '904472570135457853',
@@ -239,8 +239,16 @@ exports.scrapeAndSendRecords = async (message) => {
 		return;
 
 	let offset = 0;
-	const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
-	const members = memberListData.items;
+	let members = [];
+
+	if (args.length === 0) {
+		const { data: memberListData } = await membersDataHelper.getMembers(clanTag);
+		members = memberListData.items;
+	}
+	else {
+		members = args.map(e => ({ tag: e }));
+	}
+
 	for (const { tag } of members) {
 		offset += Math.floor((Math.random() * 100) % 6);
 		const channelIds = {
@@ -248,6 +256,13 @@ exports.scrapeAndSendRecords = async (message) => {
 			IN_LOG_CHANNEL_ID_HC : channleIdByClan[clanTag],
 			IN_LOG_CHANNEL_ID_NOVA : channleIdByClan[clanTag],
 		};
-		setTimeout(() => sendInEmbed(tag, clanTag, message.client, channelIds), offset * 1000);
+		setTimeout(() => {
+			try {
+				sendInEmbed(tag, clanTag, message.client, channelIds);
+			}
+			catch (error) {
+				console.error(`In log, get clan war 2 history failed \n${error}`);
+			}
+		}, offset * 1000);
 	}
 };
