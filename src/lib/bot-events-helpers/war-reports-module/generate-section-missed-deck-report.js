@@ -210,12 +210,23 @@ const triggerCurrentRiverRaceReport = async (message, args, database, accessLeve
 		}
 		if (!flag)
 			return message.reply('Whoops! Looks like you are not authorized to use this command.');
-		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
-		paginateAndSendReport(message.client, clanTag, message.channel.id, previousSeasonDetails, unusedDecksReport);
+		let targetSeasonDetails = null;
+		if (args.length == 3) {
+			targetSeasonDetails = {
+				seasonId: args[0],
+				sectionIndex: args[1] - 1,
+				periodIndex: 6 + (args[1] - 1) * 7,
+			};
+		}
+		else {
+			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		}
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
+		paginateAndSendReport(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
 		console.error(`generate section missed decks report failed, trigger report command \n${error}`);
+		message.reply(error);
 		return false;
 	}
 };
@@ -237,24 +248,12 @@ const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, dat
 		}
 		if (!flag)
 			return message.reply('Whoops! Looks like you are not authorized to use this command.');
-
-		let targetSeasonDetails = null;
-		if (args.length == 3) {
-			targetSeasonDetails = {
-				seasonId: args[0], 
-				sectionIndex: args[1] - 1, 
-				periodIndex: 6 + (args[1] - 1) * 7, 
-			};
-		}
-		else {
-			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		}
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
-		paginateAndSendReport(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
+		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
+		paginateAndSendPlayerTags(message.client, clanTag, message.channel.id, previousSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
 		console.error(`generate section missed decks report failed, trigger report command \n${error}`);
-		message.reply(error);
 		return false;
 	}
 };
