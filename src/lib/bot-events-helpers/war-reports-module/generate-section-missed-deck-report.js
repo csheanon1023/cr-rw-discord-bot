@@ -211,7 +211,7 @@ const triggerCurrentRiverRaceReport = async (message, args, database, accessLeve
 		if (!flag)
 			return message.reply('Whoops! Looks like you are not authorized to use this command.');
 		let targetSeasonDetails = null;
-		if (args.length == 3) {
+		if (args.length == 2) {
 			targetSeasonDetails = {
 				seasonId: args[0],
 				sectionIndex: args[1] - 1,
