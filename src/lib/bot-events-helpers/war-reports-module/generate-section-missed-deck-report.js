@@ -210,14 +210,100 @@ const triggerCurrentRiverRaceReport = async (message, args, database, accessLeve
 		}
 		if (!flag)
 			return message.reply('Whoops! Looks like you are not authorized to use this command.');
+		let targetSeasonDetails = null;
+		if (args.length == 2) {
+			targetSeasonDetails = {
+				seasonId: args[0],
+				sectionIndex: args[1] - 1,
+				periodIndex: 6 + (args[1] - 1) * 7,
+			};
+		}
+		else {
+			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		}
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
+		paginateAndSendReport(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
+	}
+	catch (error) {
+		console.error(`generate section missed decks report failed, trigger report command \n${error}`);
+		message.reply(error);
+		return false;
+	}
+};
+
+const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, database, accessLevel, channelIdByClan) => {
+	try {
+		const clanTag = Object.keys(channelIdByClan)?.find(key => channelIdByClan[key] == message.channel.id);
+		if (!clanTag) {
+			message.reply('This command can only be used in clan chat channel');
+			throw 'no clanTag mapped to this channel';
+		}
+		const memberRoles = await message.member.roles.cache;
+		let flag = false;
+		for (const roleId of accessLevel) {
+			if (memberRoles.get(roleId)) {
+				flag = true;
+				break;
+			}
+		}
+		if (!flag)
+			return message.reply('Whoops! Looks like you are not authorized to use this command.');
 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
-		paginateAndSendReport(message.client, clanTag, message.channel.id, previousSeasonDetails, unusedDecksReport);
+		paginateAndSendPlayerTags(message.client, clanTag, message.channel.id, previousSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
 		console.error(`generate section missed decks report failed, trigger report command \n${error}`);
 		return false;
 	}
+};
+
+const paginateAndSendPlayerTags = async (client, clanTag, channelId, previousSeasonDetails, unusedDecksReport) => {
+	const memberList = (await membersDataHelper.getMembers(clanTag))?.data?.items?.map(member => member.tag);
+	const riverRaceReport = Object.values(unusedDecksReport.participants).filter(player => player.unusedDecks > 0);
+	riverRaceReport.forEach(player => player.isInClan = memberList.includes(player.tag) ? 1 : -1);
+	riverRaceReport.sort((player1, player2) => {
+		if (player2.isInClan == player1.isInClan)
+			return player2?.unusedDecks - player1?.unusedDecks;
+		return player1.isInClan * -1;
+	});
+	const allPagesKeys = Object.keys(riverRaceReport);
+	const numberOfPages = Math.ceil(allPagesKeys.length / 10);
+	const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
+	let retryCount = 0;
+	while (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && retryCount++ < 5) {
+		for (const index of pageFlagsIsReportSentSuccessfully.keys()) {
+			if (pageFlagsIsReportSentSuccessfully[index]) return;
+			pageFlagsIsReportSentSuccessfully[index] = await sendReportPlayerTags(client, allPagesKeys.slice(10 * index, 10 * (index + 1)), riverRaceReport, channelId);
+		}
+	}
+	return pageFlagsIsReportSentSuccessfully?.every(val => val == true) || false;
+};
+
+const sendReportPlayerTags = async (client, pageKeys, unusedDecksReport, channelId) => {
+	const channel = await client.channels.fetch(channelId);
+	const listOfPlayersWithUnusedDeckCount = pageKeys.map(pageKey => ({
+		name: unusedDecksReport[pageKey].name,
+		tag: unusedDecksReport[pageKey].tag,
+		isInClan: unusedDecksReport[pageKey].isInClan,
+	}));
+	const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+	const formatTags = (listOfPlayers) => listOfPlayers
+		.filter(({ isInClan }) => !!isInClan)
+		.map(({ tag }) => tag)
+		.join(' ');
+	const formatNames = (listOfPlayers, inClanFlag = true) => listOfPlayers
+		.filter(({ isInClan }) => !!isInClan == inClanFlag)
+		.map(({ name }) => removeEmojisFromString(name.length > 15 ? name.substring(0, 15) : name))
+		.join(', ');
+	return channel.send(`$scrape ${formatTags(listOfPlayersWithUnusedDeckCount)}`)
+		.then(() => channel.send(`In-game names for above list: ${formatNames(listOfPlayersWithUnusedDeckCount)}`))
+		.then(() => channel.send(`Not in clan anymore in current page: ${formatNames(listOfPlayersWithUnusedDeckCount, false)}`))
+		.then(() => true)
+		.catch((e) => {
+			console.error(`send action daily battle day report failed, send embed\n${e}`);
+			return false;
+		});
 };
 
 // const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds, isSendAction = false) => {
@@ -285,4 +371,5 @@ module.exports = {
 	// generateSectionMissedDeckReport,
 	// getStartAndEndCollectionDataByPeriodIndex,
 	triggerCurrentRiverRaceReport,
+	triggerGetPlayerTagsFromCurrentRiverRaceReport,
 };
