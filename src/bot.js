@@ -15,7 +15,7 @@ const { triggerCurrentRiverRaceReport } = require('./lib/bot-events-helpers/war-
 const tempScrapeCommand = require('./lib/bot-events-helpers/temp-command-send-cw2-history');
 // Database connection
 const database = databaseRepository.connectRealtimeDatabase();
-const constants = require('./config/constants')
+const constants = require('./config/constants');
 
 // Init discord client
 const client = new Client({
@@ -25,13 +25,7 @@ const client = new Client({
 // Constants
 const {
 	PREFIX,
-	CLAN1_CHAT_CHANNEL_ID,
-	CLAN2_CHAT_CHANNEL_ID,
-	CLAN3_CHAT_CHANNEL_ID,
 	LINK_DISCOD_TO_CR_ACCOUNTS_CHANNEL_ID,
-	CLAN1_ROLE_ID,
-	CLAN2_ROLE_ID,
-	CLAN3_ROLE_ID,
 	SELF_ROLE_MESSAGE_ID,
 	COLEADER_ROLE_ID,
 	LEADER_ROLE_ID,
