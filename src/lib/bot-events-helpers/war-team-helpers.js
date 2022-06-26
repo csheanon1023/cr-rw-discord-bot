@@ -6,7 +6,6 @@ exports.getMembersByLevel = async (message, args, accessLevel) => {
 		'rw': '#2PYUJUL',
 		'hc': '#P9QQVJVG',
 		'nova': '#QRVUCJVP',
-		'ew': '#Q02UV0C0',
 	};
 	const memberRoles = await message.member.roles.cache;
 	let flag = false;
