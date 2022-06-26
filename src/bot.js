@@ -38,7 +38,7 @@ const {
 	TEMP_CHANNEL_IDS_ARRAY,
 } = constants;
 
-let ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = getEnvironmentConfig(process.env.ENVIRONMENT_TYPE || 'default');
+const ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = getEnvironmentConfig(process.env.ENVIRONMENT_TYPE || 'default');
 
 const IN_OUT_LOGS_FLAG_COLLECTION = {
 	isLegacyInOutLogEnabled: ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isLegacyInOutLogEnabled,
