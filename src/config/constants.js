@@ -24,7 +24,7 @@ exports.CLAN_WISE_ROLE_IDS = {
 	'#QRVUCJVP': '931235875319332885',
 };
 
-// used by legacy reports 
+// used by legacy reports
 // exports.TEMP_CHANNEL_IDS_BY_TAG = {
 // 	'#2PYUJUL': '904461174664470628',
 // 	'#P9QQVJVG': '904472570135457853',
