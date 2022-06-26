@@ -10,7 +10,7 @@ const membersDataHelper = require('../../clash-royale-api-helpers/members-data-h
 // const { getCurrentTime } = require('../../utils/dateTimeUtils');
 const { MessageEmbed } = require('discord.js');
 
-// const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0' ];
+// const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
 
 // check if it is possible to generate a report
 const getStartAndEndCollectionDataBySectionIndex = async (database, clanTag, previousSeasonDetails, isReturnDataAction = true) => {
