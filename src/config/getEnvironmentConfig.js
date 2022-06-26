@@ -22,6 +22,7 @@ exports.getEnvironmentConfig = (environment) => {
 			isSendActionDailyBattleDayReportEnabled: false,
 			isCurrentRaceConsolidatedReportCommandEnabled: false,
 			isTempScrapeCommandEnabled: true,
+			isCurrentRaceConsolidatedReportPlayerTagsCommandEnabled: false,
 		};
 	case 'staging':
 		return {
@@ -45,6 +46,7 @@ exports.getEnvironmentConfig = (environment) => {
 			isSendActionDailyBattleDayReportEnabled: true,
 			isCurrentRaceConsolidatedReportCommandEnabled: true,
 			isTempScrapeCommandEnabled: false,
+			isCurrentRaceConsolidatedReportPlayerTagsCommandEnabled: true,
 		};
 	case 'dev':
 		return {
@@ -68,6 +70,7 @@ exports.getEnvironmentConfig = (environment) => {
 			isSendActionDailyBattleDayReportEnabled: true,
 			isCurrentRaceConsolidatedReportCommandEnabled: true,
 			isTempScrapeCommandEnabled: false,
+			isCurrentRaceConsolidatedReportPlayerTagsCommandEnabled: false,
 		};
 	default:
 		return {
@@ -91,6 +94,7 @@ exports.getEnvironmentConfig = (environment) => {
 			isSendActionDailyBattleDayReportEnabled: false,
 			isCurrentRaceConsolidatedReportCommandEnabled: false,
 			isTempScrapeCommandEnabled: false,
+			isCurrentRaceConsolidatedReportPlayerTagsCommandEnabled: false,
 		};
 	}
 };
