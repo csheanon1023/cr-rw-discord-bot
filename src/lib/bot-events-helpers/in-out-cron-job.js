@@ -9,7 +9,7 @@ const playerClanWars2HistoryHelper = require('../scraping-helpers/player-clan-wa
 const { timePassedBetweenTwoMillisecondTimestamps } = require('../utils/dateTimeUtils');
 
 exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
-	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
+	const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 	let clanMembersCache = [];
 	let lastInOutCronSuccessTimestamp = -1;
 	// const clanNameByKeyCache = {
@@ -20,6 +20,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 		'2PYUJUL': 'RW',
 		'P9QQVJVG': 'HC',
 		'QRVUCJVP': 'NOVA',
+		'Q02UV0C0': 'EW',
+		'LUVY2QY2': 'ALPHA',
 	};
 	const embedBannerColours = {
 		COLOUR_ORANGE: '#f56200',
@@ -238,14 +240,14 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 					else if (lastTenOverallAverage < 800) {
 						bannerColour = embedBannerColours.COLOUR_RED;
 						recommendationMessage = 'CW2 score is too low, player should be kicked out.';
-						databaseRepository.getToKickPlayerTagsByClan(database).then(data => {
-							let toKickListData = data.val();
-							if (toKickListData && toKickListData.length !== 0)
-								toKickListData = [...toKickListData, playerTag];
-							else
-								toKickListData = [ playerTag ];
-							databaseRepository.setToKickPlayerTagsByClan(clanTag, toKickListData, database);
-						}).catch(error => console.error(`[IN-LOG] Something went wrong while saving kick list data. \nerror: ${error}`));
+						// databaseRepository.getToKickPlayerTagsByClan(database).then(data => {
+						// 	let toKickListData = data.val();
+						// 	if (toKickListData && toKickListData.length !== 0)
+						// 		toKickListData = [...toKickListData, playerTag];
+						// 	else
+						// 		toKickListData = [ playerTag ];
+						// 	databaseRepository.setToKickPlayerTagsByClan(clanTag, toKickListData, database);
+						// }).catch(error => console.error(`[IN-LOG] Something went wrong while saving kick list data. \nerror: ${error}`));
 					}
 					else if (lastTenOverallAverage >= 800 && lastTenOverallAverage < 1400) {
 						bannerColour = embedBannerColours.COLOUR_YELLOW;
