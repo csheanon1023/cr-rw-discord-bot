@@ -8,7 +8,7 @@
 const databaseRepository = require('../database-repository');
 const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
 
-const currentClans = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP' ];
+const currentClans = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 
 // generate last-known-members-list object
 const resetMembersList = async (database, clanTag) => {
