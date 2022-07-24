@@ -82,8 +82,6 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		console.log(PLAYERS_ALLOWED_TO_USE_SCRAPE, message.author.id, PLAYERS_ALLOWED_TO_USE_SCRAPE.includes(message.author.id));
-
 		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && PLAYERS_ALLOWED_TO_USE_SCRAPE.includes(message.author.id) && TEMP_CHANNEL_IDS_ARRAY.includes(message.channel.id)) {
 			tempScrapeCommand.scrapeAndSendRecords(message, args, TEMP_CHANNEL_IDS_BY_CLAN, CLAN_TAGS_BY_TEMP_CHANNEL_IDS);
 			return;
