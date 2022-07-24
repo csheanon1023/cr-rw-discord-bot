@@ -248,9 +248,19 @@ const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, dat
 		}
 		if (!flag)
 			return message.reply('Whoops! Looks like you are not authorized to use this command.');
-		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
-		paginateAndSendPlayerTags(message.client, clanTag, message.channel.id, previousSeasonDetails, unusedDecksReport);
+		let targetSeasonDetails = null;
+		if (args.length == 2) {
+			targetSeasonDetails = {
+				seasonId: args[0],
+				sectionIndex: args[1] - 1,
+				periodIndex: 6 + (args[1] - 1) * 7,
+			};
+		}
+		else {
+			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		}
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
+		paginateAndSendPlayerTags(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
 		console.error(`generate section missed decks report failed, trigger report command \n${error}`);
