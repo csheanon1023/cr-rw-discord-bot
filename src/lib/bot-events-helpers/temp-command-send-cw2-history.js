@@ -17,8 +17,8 @@ const clanCodeByKeyCache = {
 	'2PYUJUL': 'RW',
 	'P9QQVJVG': 'HC',
 	'QRVUCJVP': 'NOVA',
-	// 'Q02UV0C0': 'EW',
-	// 'LUVY2QY2': 'ALPHA',
+	'Q02UV0C0': 'EW',
+	'LUVY2QY2': 'ALPHA',
 };
 const embedBannerColours = {
 	COLOUR_ORANGE: '#f56200',
@@ -228,16 +228,16 @@ exports.scrapeAndSendRecords = async (message, args) => {
 		'#2PYUJUL': '904461174664470628',
 		'#P9QQVJVG': '904472570135457853',
 		'#QRVUCJVP': '931255639202746368',
-		// '#Q02UV0C0': '1000370798260924466',
-		// '#LUVY2QY2': '1000370863977287760',
+		'#Q02UV0C0': '1000370798260924466',
+		'#LUVY2QY2': '1000370863977287760',
 	};
 
 	const clanTagByChannelId = {
 		'904461174664470628': '#2PYUJUL',
 		'904472570135457853': '#P9QQVJVG',
 		'931255639202746368': '#QRVUCJVP',
-		// '1000370798260924466': '#Q02UV0C0',
-		// '1000370863977287760': '#LUVY2QY2',
+		'1000370798260924466': '#Q02UV0C0',
+		'1000370863977287760': '#LUVY2QY2',
 	};
 
 	const clanTag = clanTagByChannelId[message?.channel?.id];
@@ -261,6 +261,8 @@ exports.scrapeAndSendRecords = async (message, args) => {
 			IN_LOG_CHANNEL_ID_RW : channleIdByClan[clanTag],
 			IN_LOG_CHANNEL_ID_HC : channleIdByClan[clanTag],
 			IN_LOG_CHANNEL_ID_NOVA : channleIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_EW : channleIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_ALPHA : channleIdByClan[clanTag],
 		};
 		setTimeout(() => {
 			try {
