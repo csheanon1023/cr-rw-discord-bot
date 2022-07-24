@@ -293,7 +293,10 @@ const sendReportPlayerTags = async (client, pageKeys, unusedDecksReport, channel
 		.map(({ tag }) => tag)
 		.join(' ');
 	const formatNames = (listOfPlayers, inClanFlag = true) => listOfPlayers
-		.filter(({ isInClan }) => isInClan === -1)
+		.filter(({ isInClan }) => {
+			const inClanStatus = isInClan === -1;
+			return inClanStatus === inClanFlag;
+		})
 		.map(({ name }) => removeEmojisFromString(name.length > 15 ? name.substring(0, 15) : name))
 		.join(', ');
 	return channel.send(`$scrape ${formatTags(listOfPlayersWithUnusedDeckCount)}`)
