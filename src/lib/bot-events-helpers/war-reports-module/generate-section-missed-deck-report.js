@@ -294,7 +294,7 @@ const sendReportPlayerTags = async (client, pageKeys, unusedDecksReport, channel
 		.join(' ');
 	const formatNames = (listOfPlayers, inClanFlag = true) => listOfPlayers
 		.filter(({ isInClan }) => {
-			const inClanStatus = isInClan === -1;
+			const inClanStatus = isInClan === 1;
 			return inClanStatus === inClanFlag;
 		})
 		.map(({ name }) => removeEmojisFromString(name.length > 15 ? name.substring(0, 15) : name))
