@@ -223,24 +223,24 @@ const getClanWars2History = async (royaleApiToken, playerTag, playerName) => {
 	}
 };
 
-exports.scrapeAndSendRecords = async (message, args) => {
-	const channleIdByClan = {
-		'#2PYUJUL': '904461174664470628',
-		'#P9QQVJVG': '904472570135457853',
-		'#QRVUCJVP': '931255639202746368',
-		'#Q02UV0C0': '1000370798260924466',
-		'#LUVY2QY2': '1000370863977287760',
-	};
+exports.scrapeAndSendRecords = async (message, args, channelIdByClan, clanTagsByChannelId) => {
+	// const channelIdByClan = {
+	// 	'#2PYUJUL': '904461174664470628',
+	// 	'#P9QQVJVG': '904472570135457853',
+	// 	'#QRVUCJVP': '931255639202746368',
+	// 	'#Q02UV0C0': '1000370798260924466',
+	// 	'#LUVY2QY2': '1000370863977287760',
+	// };
 
-	const clanTagByChannelId = {
-		'904461174664470628': '#2PYUJUL',
-		'904472570135457853': '#P9QQVJVG',
-		'931255639202746368': '#QRVUCJVP',
-		'1000370798260924466': '#Q02UV0C0',
-		'1000370863977287760': '#LUVY2QY2',
-	};
+	// const clanTagsByChannelId = {
+	// 	'904461174664470628': '#2PYUJUL',
+	// 	'904472570135457853': '#P9QQVJVG',
+	// 	'931255639202746368': '#QRVUCJVP',
+	// 	'1000370798260924466': '#Q02UV0C0',
+	// 	'1000370863977287760': '#LUVY2QY2',
+	// };
 
-	const clanTag = clanTagByChannelId[message?.channel?.id];
+	const clanTag = clanTagsByChannelId[message?.channel?.id];
 	if (!clanTag)
 		return;
 
@@ -258,11 +258,11 @@ exports.scrapeAndSendRecords = async (message, args) => {
 	for (const { tag } of members) {
 		offset += Math.floor((Math.random() * 100) % 6);
 		const channelIds = {
-			IN_LOG_CHANNEL_ID_RW : channleIdByClan[clanTag],
-			IN_LOG_CHANNEL_ID_HC : channleIdByClan[clanTag],
-			IN_LOG_CHANNEL_ID_NOVA : channleIdByClan[clanTag],
-			IN_LOG_CHANNEL_ID_EW : channleIdByClan[clanTag],
-			IN_LOG_CHANNEL_ID_ALPHA : channleIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_RW : channelIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_HC : channelIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_NOVA : channelIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_EW : channelIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_ALPHA : channelIdByClan[clanTag],
 		};
 		setTimeout(() => {
 			try {

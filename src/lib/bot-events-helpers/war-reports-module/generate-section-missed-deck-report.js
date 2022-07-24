@@ -268,13 +268,13 @@ const paginateAndSendPlayerTags = async (client, clanTag, channelId, previousSea
 		return player1.isInClan * -1;
 	});
 	const allPagesKeys = Object.keys(riverRaceReport);
-	const numberOfPages = Math.ceil(allPagesKeys.length / 10);
+	const numberOfPages = Math.ceil(allPagesKeys.length / 50);
 	const pageFlagsIsReportSentSuccessfully = new Array(numberOfPages).fill(false);
 	let retryCount = 0;
 	while (pageFlagsIsReportSentSuccessfully.find(val => val == false) != null && retryCount++ < 5) {
 		for (const index of pageFlagsIsReportSentSuccessfully.keys()) {
 			if (pageFlagsIsReportSentSuccessfully[index]) return;
-			pageFlagsIsReportSentSuccessfully[index] = await sendReportPlayerTags(client, allPagesKeys.slice(10 * index, 10 * (index + 1)), riverRaceReport, channelId);
+			pageFlagsIsReportSentSuccessfully[index] = await sendReportPlayerTags(client, allPagesKeys.slice(50 * index, 50 * (index + 1)), riverRaceReport, channelId);
 		}
 	}
 	return pageFlagsIsReportSentSuccessfully?.every(val => val == true) || false;
@@ -289,11 +289,14 @@ const sendReportPlayerTags = async (client, pageKeys, unusedDecksReport, channel
 	}));
 	const removeEmojisFromString = (text) => text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
 	const formatTags = (listOfPlayers) => listOfPlayers
-		.filter(({ isInClan }) => !!isInClan)
+		.filter(({ isInClan }) => isInClan === 1)
 		.map(({ tag }) => tag)
 		.join(' ');
 	const formatNames = (listOfPlayers, inClanFlag = true) => listOfPlayers
-		.filter(({ isInClan }) => !!isInClan == inClanFlag)
+		.filter(({ isInClan }) => {
+			const inClanStatus = isInClan === -1;
+			return inClanStatus === inClanFlag;
+		})
 		.map(({ name }) => removeEmojisFromString(name.length > 15 ? name.substring(0, 15) : name))
 		.join(', ');
 	return channel.send(`$scrape ${formatTags(listOfPlayersWithUnusedDeckCount)}`)
