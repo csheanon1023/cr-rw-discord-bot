@@ -36,6 +36,8 @@ const {
 	CLAN_WISE_ROLE_IDS,
 	// TEMP_CHANNEL_IDS, used by legacy reports
 	TEMP_CHANNEL_IDS_ARRAY,
+	TEMP_CHANNEL_IDS_BY_CLAN,
+	CLAN_TAGS_BY_TEMP_CHANNEL_IDS,
 } = constants;
 
 const ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = getEnvironmentConfig(process.env.ENVIRONMENT_TYPE || 'default');
@@ -80,7 +82,7 @@ client.on('message', async (message) => {
 		}
 
 		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && message.author.id === '353463252883210240' && TEMP_CHANNEL_IDS_ARRAY.includes(message.channel.id)) {
-			tempScrapeCommand.scrapeAndSendRecords(message, args);
+			tempScrapeCommand.scrapeAndSendRecords(message, args, TEMP_CHANNEL_IDS_BY_CLAN, CLAN_TAGS_BY_TEMP_CHANNEL_IDS);
 			return;
 		}
 
