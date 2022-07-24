@@ -38,6 +38,7 @@ const {
 	TEMP_CHANNEL_IDS_ARRAY,
 	TEMP_CHANNEL_IDS_BY_CLAN,
 	CLAN_TAGS_BY_TEMP_CHANNEL_IDS,
+	PLAYERS_ALLOWED_TO_USE_SCRAPE,
 } = constants;
 
 const ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG = getEnvironmentConfig(process.env.ENVIRONMENT_TYPE || 'default');
@@ -81,7 +82,7 @@ client.on('message', async (message) => {
 			return;
 		}
 
-		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && message.author.id === '353463252883210240' && TEMP_CHANNEL_IDS_ARRAY.includes(message.channel.id)) {
+		if (ENVIRONMENT_SPECIFIC_APPLICATION_CONFIG.isTempScrapeCommandEnabled && CMD_NAME === 'scrape' && PLAYERS_ALLOWED_TO_USE_SCRAPE.includes(message.author.id) && TEMP_CHANNEL_IDS_ARRAY.includes(message.channel.id)) {
 			tempScrapeCommand.scrapeAndSendRecords(message, args, TEMP_CHANNEL_IDS_BY_CLAN, CLAN_TAGS_BY_TEMP_CHANNEL_IDS);
 			return;
 		}
