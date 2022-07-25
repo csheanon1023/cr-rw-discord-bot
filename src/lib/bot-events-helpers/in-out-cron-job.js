@@ -431,8 +431,8 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 						if (sections.length == 0)
 							return;
 						playerLeftEmbed.addField(
-							`${seasonStats} [${sections.map(s => `${Number(s) + 1} (${groupedSeasonStats[seasonStats]?.[s]?.timePassed ?? 'NA'})`)?.join(', ')}]`,
-							sections.map(s => `${groupedSeasonStats[seasonStats]?.[s]?.fame ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.join(', '),
+							`${seasonStats} [${sections.map(s => `${Number(s) + 1} (${groupedSeasonStats[seasonStats]?.[s]?.timePassed ?? 'NA'})`)?.reverse()?.join(', ')}]`,
+							sections.map(s => `${groupedSeasonStats[seasonStats]?.[s]?.fame ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.reverse()?.join(', '),
 							false,
 						);
 					});
