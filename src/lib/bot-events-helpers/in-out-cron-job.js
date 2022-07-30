@@ -266,6 +266,14 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 						recommendationMessage = 'Exceptional CW2 history, expected to boost our clan performance significantly.';
 					}
 
+					const timeSinceLastSixKnownRaces = clanWar2History.rows.length >= 6 ?
+						timePassedBetweenTwoMillisecondTimestamps(clanWar2History.rows?.[5]?.log_created_date_dt * 1000, date) :
+						false;
+					const isTimelineStale = timeSinceLastSixKnownRaces ? timeSinceLastSixKnownRaces.endsWith('w') && Number(timeSinceLastSixKnownRaces.replace (/[^\d.]/g, '')) > 12 : false;
+					if (isTimelineStale) {
+						recommendationMessage = `**Note:** The records found for this player are not recent, so the recommendation is not very reliable.\n**[RECOMMENDATION IS BASED ON OLD SCORES]**\n${recommendationMessage}`;
+					}
+
 					playerJoinedEmbed
 						.setColor(bannerColour)
 						.addFields(
@@ -274,7 +282,7 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 							{ name: 'CW2 Best 10', value: bestTenTotalRecordsFound != 0 ? `${bestTenOverallAverage} (${bestTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'CW2 Worst 10', value: worstTenTotalRecordsFound != 0 ? `${worstTenOverallAverage} (${worstTenTotalRecordsFound})` : 'NA(0)', inline: true },
 							{ name: 'Timeline of last 10 records', value: timeline, inline: false },
-							{ name: 'Recommended action (*not reliable for stale timelines)', value: recommendationMessage, inline: false },
+							{ name: 'Recommended action', value: recommendationMessage, inline: false },
 						);
 				}
 			}
@@ -426,13 +434,23 @@ exports.startInOutLogCronEachMinute = (database, client, channelIds, flags) => {
 
 					const groupedSeasonStats = groupBySeasons(filteredClanWar2History);
 					const latestFiveSeasonStats = Object.keys(groupedSeasonStats).sort((a, b) => b - a).slice(0, 5);
+					const colorCodeBasedOnValue = (score) => {
+						if (score <= 800)
+							return `[${score}]`;
+						else if (score < 1600)
+							return `_${score}`;
+						else if (score < 2400)
+							return `${score}`;
+						else
+							return `#${score}`;
+					};
 					latestFiveSeasonStats?.forEach(seasonStats => {
 						const sections = Object.keys(groupedSeasonStats[seasonStats]);
 						if (sections.length == 0)
 							return;
 						playerLeftEmbed.addField(
 							`${seasonStats} [${sections.map(s => `${Number(s) + 1} (${groupedSeasonStats[seasonStats]?.[s]?.timePassed ?? 'NA'})`)?.reverse()?.join(', ')}]`,
-							sections.map(s => `${groupedSeasonStats[seasonStats]?.[s]?.fame ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.reverse()?.join(', '),
+							`\`\`\`css\n${sections.map(s => `${colorCodeBasedOnValue(groupedSeasonStats[seasonStats]?.[s]?.fame) ?? 'NA'}(${groupedSeasonStats[seasonStats]?.[s]?.decksUsed ?? 'NA'})`)?.reverse()?.join(', ')}\n\`\`\``,
 							false,
 						);
 					});
