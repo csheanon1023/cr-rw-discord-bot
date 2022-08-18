@@ -9,8 +9,9 @@ const membersDataHelper = require('../../clash-royale-api-helpers/members-data-h
 // const cron = require('node-cron');
 // const { getCurrentTime } = require('../../utils/dateTimeUtils');
 const { MessageEmbed } = require('discord.js');
+const { getRows } = require('../../astra-database-rest-api-helpers/adapters/data');
 
-// const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
+const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 
 // check if it is possible to generate a report
 const getStartAndEndCollectionDataBySectionIndex = async (database, clanTag, previousSeasonDetails, isReturnDataAction = true) => {
@@ -48,29 +49,43 @@ const createObjectOfAllParticipantsWithTotalDecks = async (startOfDayData, clanT
 			clanTag,
 			seasonId,
 			sectionIndex,
-			participants: {},
-		};
-		Object.values(startOfDayData).forEach(periodData => {
-			periodData?.participants?.forEach(participant => {
-				if (Object.hasOwnProperty.call(returnObject?.participants, participant?.tag?.substring(1))) {
-					if (Object.hasOwnProperty.call(returnObject?.participants[participant?.tag?.substring(1)], 'totalAvailableDecks')) {
-						returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks += 4;
-					}
-					else {
-						returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks = 4;
-						returnObject.participants[participant?.tag?.substring(1)].name = participant.name;
-						returnObject.participants[participant?.tag?.substring(1)].tag = participant.tag;
-					}
+			participants: startOfDayData.reduce((acc, { player_tag, player_name }) => {
+				const tag = player_tag.substring(1);
+				if (tag in acc) {
+					acc[tag].totalAvailableDecks = (acc[tag].totalAvailableDecks ?? 0) + 4;
 				}
 				else {
-					returnObject.participants[participant?.tag?.substring(1)] = {
-						name: participant.name,
-						tag: participant.tag,
+					acc[tag] = {
+						name: player_name,
+						tag: player_tag,
 						totalAvailableDecks: 4,
 					};
 				}
-			});
-		});
+				return acc;
+			}, {}),
+		};
+
+		// Object.values(startOfDayData).forEach(periodData => {
+		// 	periodData?.participants?.forEach(participant => {
+		// 		if (Object.hasOwnProperty.call(returnObject?.participants, participant?.tag?.substring(1))) {
+		// 			if (Object.hasOwnProperty.call(returnObject?.participants[participant?.tag?.substring(1)], 'totalAvailableDecks')) {
+		// 				returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks += 4;
+		// 			}
+		// 			else {
+		// 				returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks = 4;
+		// 				returnObject.participants[participant?.tag?.substring(1)].name = participant.name;
+		// 				returnObject.participants[participant?.tag?.substring(1)].tag = participant.tag;
+		// 			}
+		// 		}
+		// 		else {
+		// 			returnObject.participants[participant?.tag?.substring(1)] = {
+		// 				name: participant.name,
+		// 				tag: participant.tag,
+		// 				totalAvailableDecks: 4,
+		// 			};
+		// 		}
+		// 	});
+		// });
 		return returnObject;
 	}
 	catch (error) {
@@ -84,26 +99,41 @@ const createObjectOfAllParticipantsWithTotalUnusedDecks = async (unusedDecksRepo
 		if (Object.values(unusedDecksReport).length == 0) {
 			throw 'unable to find any records in unusedDecksReport';
 		}
-		const returnObject = {};
-		Object.values(unusedDecksReport).forEach(periodData => {
-			periodData?.unusedDecksReport?.forEach(participant => {
-				if (Object.hasOwnProperty.call(returnObject, participant?.tag?.substring(1))) {
-					if (Object.hasOwnProperty.call(returnObject[participant?.tag?.substring(1)], 'totalUnusedDecks')) {
-						returnObject[participant?.tag?.substring(1)].totalUnusedDecks += participant?.unusedDecks;
-					}
-					else {
-						returnObject[participant?.tag?.substring(1)].totalUnusedDecks = participant?.unusedDecks;
-					}
-				}
-				else {
-					returnObject[participant?.tag?.substring(1)] = {
-						totalUnusedDecks: participant?.unusedDecks,
-						name: participant?.tag,
-						tag: participant?.tag,
-					};
-				}
-			});
-		});
+
+		const returnObject = unusedDecksReport.reduce((acc, { player_tag, unused_decks, player_name }) => {
+			const tag = player_tag.substring(1);
+			if (tag in acc) {
+				acc[tag].totalUnusedDecks = (acc[tag].totalUnusedDecks ?? 0) + unused_decks;
+			}
+			else {
+				acc[tag] = {
+					totalUnusedDecks: unused_decks,
+					name: player_name,
+					tag: player_tag,
+				};
+			}
+			return acc;
+		}, {});
+		// const returnObject = {};
+		// Object.values(unusedDecksReport).forEach(periodData => {
+		// 	periodData?.unusedDecksReport?.forEach(participant => {
+		// 		if (Object.hasOwnProperty.call(returnObject, participant?.tag?.substring(1))) {
+		// 			if (Object.hasOwnProperty.call(returnObject[participant?.tag?.substring(1)], 'totalUnusedDecks')) {
+		// 				returnObject[participant?.tag?.substring(1)].totalUnusedDecks += participant?.unusedDecks;
+		// 			}
+		// 			else {
+		// 				returnObject[participant?.tag?.substring(1)].totalUnusedDecks = participant?.unusedDecks;
+		// 			}
+		// 		}
+		// 		else {
+		// 			returnObject[participant?.tag?.substring(1)] = {
+		// 				totalUnusedDecks: participant?.unusedDecks,
+		// 				name: participant?.name,
+		// 				tag: participant?.tag,
+		// 			};
+		// 		}
+		// 	});
+		// });
 		return returnObject;
 	}
 	catch (error) {
@@ -120,9 +150,16 @@ const generateSectionMissedDeckReport = async (database, clanTag, previousSeason
 		if (!collectionData || !collectionData.success) {
 			throw 'get collection data was not successful';
 		}
-		const { startOfDayData, unusedDecksReport } = collectionData;
-		const participantList = await createObjectOfAllParticipantsWithTotalDecks(startOfDayData, clanTag, seasonId, sectionIndex);
-		const consolidatedUnusedDeckReport = await createObjectOfAllParticipantsWithTotalUnusedDecks(unusedDecksReport);
+
+		const week = Math.floor(Number(previousSeasonDetails.periodIndex) / 7) + 1;
+		// const day = (Number(previousSeasonDetails.periodIndex) + 5) % 7;
+		const { data: astraStartOfDayData } = await getRows('war_reports', 'collected_battle_day_participant_data', ['2PYUJUL', 'start', `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'player_name']);
+		const { data: astraUnusedDecksReport } = await getRows('war_reports', 'period_unused_decks_report', ['2PYUJUL', `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'unused_decks', 'player_name']);
+		// console.log(astraCollectionData.data.length);
+
+		// const { startOfDayData, unusedDecksReport } = collectionData;
+		const participantList = await createObjectOfAllParticipantsWithTotalDecks(astraStartOfDayData.data, clanTag, seasonId, sectionIndex);
+		const consolidatedUnusedDeckReport = await createObjectOfAllParticipantsWithTotalUnusedDecks(astraUnusedDecksReport.data);
 		if (!participantList || !consolidatedUnusedDeckReport)
 			throw `Not able to generate participant list / consolidated report object clantag: ${clanTag}`;
 		Object.keys(participantList.participants).forEach(playerTag => {
@@ -386,3 +423,24 @@ module.exports = {
 	triggerCurrentRiverRaceReport,
 	triggerGetPlayerTagsFromCurrentRiverRaceReport,
 };
+
+// const { Client } = require('discord.js');
+// const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
+// (async () => {
+// 	const client = new Client({
+// 		partials: ['MESSAGE', 'REACTION'],
+// 	});
+// 	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+// 	const channelIdByClan = {
+// 		'#2PYUJUL': '904461174664470628',
+// 		'#P9QQVJVG': '904472570135457853',
+// 	};
+// 	const database = await connectRealtimeDatabase();
+// 	for (const clanTag of clanListCache) {
+// 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+// 		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
+// 		// saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
+// 		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
+// 		paginateAndSendReport(client, clanTag, channelIdByClan[clanTag], previousSeasonDetails, unusedDecksReport);
+// 	}
+// })();
