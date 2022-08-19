@@ -22,6 +22,10 @@ const schema = {
 			type: 'partition',
 		},
 		{
+			column: 'collection_type',
+			type: 'partition',
+		},
+		{
 			column: 'season',
 			type: 'partition',
 		},

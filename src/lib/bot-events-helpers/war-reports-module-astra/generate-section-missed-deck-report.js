@@ -6,8 +6,7 @@ const membersDataHelper = require('../../clash-royale-api-helpers/members-data-h
 const { MessageEmbed } = require('discord.js');
 const { getRows } = require('../../astra-database-helpers/rest-api-wrapper/getRows');
 
-const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
-
+// const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 
 const createObjectOfAllParticipantsWithTotalDecks = (startOfDayData) => {
 	try {
@@ -329,24 +328,3 @@ module.exports = {
 	triggerCurrentRiverRaceReport,
 	triggerGetPlayerTagsFromCurrentRiverRaceReport,
 };
-
-const { Client } = require('discord.js');
-const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
-(async () => {
-	const client = new Client({
-		partials: ['MESSAGE', 'REACTION'],
-	});
-	await client.login(process.env.DISCORDJS_BOT_TOKEN);
-	const channelIdByClan = {
-		'#2PYUJUL': '904461174664470628',
-		'#P9QQVJVG': '904472570135457853',
-	};
-	const database = await connectRealtimeDatabase();
-	for (const clanTag of clanListCache) {
-		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
-		// saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
-		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
-		paginateAndSendReport(client, clanTag, channelIdByClan[clanTag], previousSeasonDetails, unusedDecksReport);
-	}
-})();

@@ -1,27 +1,47 @@
 // node -r dotenv/config ./src/lib/astra-database-helpers/cassandra-nodejs-driver/insertRowsJson.js
+// eslint-disable-next-line no-unused-vars
 const { getClient, close } = require('./client');
 
-const insertRowsJson = async (keyspace, table, rows) => {
+// validationKeys: Array<{column, value}>
+const insertRowsJson = async (keyspace, table, rows, validationKeys = null) => {
 	try {
 		const client = await getClient();
 		const insertQueries = rows.reduce((query, row) => {
-			query.push(`INSERT INTO ${keyspace}.${table} JSON '${JSON.stringify(row)}'`);
+			query.push(`INSERT INTO ${keyspace}.${table} JSON '${JSON.stringify(row).replace(/'/g, ' ')}'`);
 			return query;
 		}, []);
 		// const rs = await client.batch(insertQueries);
 		await client.batch(insertQueries);
-		console.log('Data saved successfully');
+		console.log('Insert batch: Data saved successfully');
 
-		// TODO validation
-		// `SELECT COUNT(*) FROM collected_battle_day_participant_data
-		// WHERE clan_tag = 'QRVUCJVP' AND collection_type = 'start' AND  season = 2;`;
-		// new Set(lll.map(e=>`${e.clan_tag}/${e.collection_type}/${e.season}/${e.week}/${e.day}/${e.player_tag}`)).size
-
-		await close();
+		if (
+			validationKeys &&
+			'uniqueKeys' in validationKeys &&
+			'countQueryKeys' in validationKeys &&
+			Object.keys(validationKeys['uniqueKeys']).length > 0 &&
+			Object.keys(validationKeys['countQueryKeys']).length > 0
+		) {
+			const columns = validationKeys?.countQueryKeys?.map(({ column }) => column);
+			const hints = validationKeys?.countQueryKeys?.map(({ type }) => type);
+			const uniqueKeys = validationKeys?.uniqueKeys?.map(({ column }) => column);
+			const expectedCount = new Set(rows.map(row => uniqueKeys.map(col => row[col]).join('/'))).size;
+			// TODO? check rows with schema
+			// if (schema does not have each of the columns)
+			// 	throw `validationKeys doesn't match the schema ${keyspace}/${table}/${columns.join('/')}`;
+			const columnsClause = columns.map(column => `${column} = ?`).join(' AND ');
+			const params = validationKeys?.countQueryKeys?.map(({ value }) => value);
+			const query = `SELECT COUNT(*) FROM ${keyspace}.${table} WHERE ${columnsClause}`;
+			const res = await client.execute(query, params, { hints });
+			// await close();
+			if (expectedCount != res.rows?.[0]?.count)
+				throw `Looks like the batch didn't succeed ${keyspace}/${table}/${columns.join('/')}`;
+		}
+		// await close();
 		return true;
 	}
 	catch (error) {
 		console.error(error);
+		return false;
 	}
 };
 

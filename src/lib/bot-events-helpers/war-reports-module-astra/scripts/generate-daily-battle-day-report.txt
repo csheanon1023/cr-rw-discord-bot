@@ -1,5 +1,4 @@
 const { Client } = require('discord.js');
-const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
 (async () => {
 	const client = new Client({
 		partials: ['MESSAGE', 'REACTION'],
@@ -9,11 +8,10 @@ const { connectRealtimeDatabase } = require('../../database-helpers/database-rep
 		'#2PYUJUL': '904461174664470628',
 		'#P9QQVJVG': '904472570135457853',
 	};
-	const database = await connectRealtimeDatabase();
 	for (const clanTag of clanListCache) {
 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-		const unusedDecksReport = await generateBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
-		saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
+		const unusedDecksReport = await generateBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
+		saveBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
 		sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
 	}
 })();

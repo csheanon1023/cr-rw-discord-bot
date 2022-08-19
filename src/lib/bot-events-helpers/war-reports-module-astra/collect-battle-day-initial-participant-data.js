@@ -1,20 +1,22 @@
-// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module/collect-battle-day-initial-participant-data.js
-const { setCurrentWarBattleDayParticipantData } = require('../../database-helpers/database-repository');
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module-astra/collect-battle-day-initial-participant-data.js
 const currentRiverRaceDataHelper = require('../../clash-royale-api-helpers/current-river-race-data-helper');
 const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
 const { getCurrentSeasonDetailsUptoSpecificPeriod } = require('../../utils/warSeasonDetailsUtils');
 const cron = require('node-cron');
 const { getCurrentTime } = require('../../utils/dateTimeUtils');
+const { insertRowsJson } = require('../../astra-database-helpers/cassandra-nodejs-driver/insertRowsJson.js');
 
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
+const collection_type = 'start';
 
-const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
+const scheduleCronToCollectBattleDayInitialParticipantData = () => {
 	let isBattleDayInitialParticipantDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 
 	// At every minute from 15 through 20 past hour 12 on Sunday, Thursday, Friday, and Saturday [offset 21] Data collection
 	cron.schedule('21 15-20 12 * * 0,4,5,6', async () => {
 		const currentDate = new Date();
 		const currentDay = currentDate.getDay();
+		const astraTimestamp = currentDate.toISOString().split('.')[0] + 'Z';
 		/**
      * Relation between periodIndex and date
      * Time in 24Hr format
@@ -54,25 +56,36 @@ const scheduleCronToCollectBattleDayInitialParticipantData = (database) => {
 					}
 
 					membersDataHelper.getMembers(clanTag).then(({ data: currentClanMemberList }) => {
+						const clan_tag = clanCurrentRiverRaceData?.clan?.tag?.substring(1) ?? clanTag.substring(1);
+						const clan_name = clanCurrentRiverRaceData?.clan?.name;
+						const season = currentSeasonDetails.seasonId;
+						const week = Math.floor(Number(currentSeasonDetails.periodIndex) / 7) + 1;
+						const day = (Number(currentSeasonDetails.periodIndex) + 5) % 7;
 						const memberListTagsArray = currentClanMemberList.items.map(member => member.tag);
+						const validationKeys = {
+							countQueryKeys: [
+								{ column: 'clan_tag', value: clan_tag, type: 'text' },
+								{ column: 'collection_type', value: collection_type, type: 'text' },
+								{ column: 'season', value: season, type: 'int' },
+								{ column: 'week', value: week, type: 'int' },
+								{ column: 'day', value: day, type: 'int' },
+							],
+							uniqueKeys: [
+								{ column: 'player_tag', type: 'text' },
+							],
+						};
+
 						const currentParticipantsData = clanCurrentRiverRaceData?.clan?.participants
 							.filter(participant => memberListTagsArray.includes(participant.tag))
-							.map(participant => participant);
-						const clanBattleDayParticipantDataSnap = {
-							clanName: clanCurrentRiverRaceData?.clan?.name,
-							clanTag: clanCurrentRiverRaceData?.clan?.tag,
-							participants: currentParticipantsData,
-							timestamp: currentDate.getTime(),
-							seasonDetails: currentSeasonDetails,
-						};
-						if (clanBattleDayParticipantDataSnap && Object.keys(clanBattleDayParticipantDataSnap).length !== 0) {
-							setCurrentWarBattleDayParticipantData(clanTag, currentSeasonDetails.seasonId, currentSeasonDetails.periodIndex, clanBattleDayParticipantDataSnap, database).then((isSaved) => {
-								isBattleDayInitialParticipantDataSnapSaved[clanCurrentRiverRaceData?.clan?.tag] = isSaved;
-							}).catch((error) => {
-								console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, saving to DB step \n${error}`);
-								return;
-							});
-						}
+							.map(({ tag: player_name, name: player_tag, fame, boatAttacks: boat_attacks, decksUsed: decks_used, decksUsedToday: decks_used_today }) => (
+								{ clan_tag, clan_name, season, week, day, player_name, player_tag, collection_type, boat_attacks, decks_used, decks_used_today, fame, updated_at: astraTimestamp }));
+
+						insertRowsJson('war_reports', 'collected_battle_day_participant_data', currentParticipantsData, validationKeys).then((isSaved) => {
+							isBattleDayInitialParticipantDataSnapSaved[clanCurrentRiverRaceData?.clan?.tag] = isSaved;
+						}).catch((error) => {
+							console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, saving to DB step \n${error}`);
+							return;
+						});
 					}).catch((error) => {
 						console.error(`${formattedCurrentTime} battle day initial participant data collection cron failed, get current members step \n${error}`);
 						return;
