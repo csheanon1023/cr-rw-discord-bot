@@ -1,76 +1,33 @@
 // to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module/generate-section-missed-deck-report.js
-const {
-	getCurrentWarBattleDayParticipantDataByPeriodIndexRange,
-	getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange,
-	// setSeasonWiseBattleDayGeneratedReports,
-} = require('../../database-helpers/database-repository');
 const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../../utils/warSeasonDetailsUtils');
 const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
 // const cron = require('node-cron');
 // const { getCurrentTime } = require('../../utils/dateTimeUtils');
 const { MessageEmbed } = require('discord.js');
+const { getRows } = require('../../astra-database-helpers/rest-api-wrapper/getRows');
 
-// const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
+const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 
-// check if it is possible to generate a report
-const getStartAndEndCollectionDataBySectionIndex = async (database, clanTag, previousSeasonDetails, isReturnDataAction = true) => {
-	try {
-		const { seasonId, sectionIndex, periodIndex } = previousSeasonDetails;
-		const periodIndexStart = sectionIndex * 7;
-		const periodIndexEnd = periodIndex;
-		if (periodIndexEnd < periodIndexStart)
-			throw 'period index end is less than period index start';
-		const [startOfDayData, unusedDecksReport] = (await Promise.all([
-			getCurrentWarBattleDayParticipantDataByPeriodIndexRange(database, clanTag, seasonId, periodIndexStart, periodIndexEnd),
-			getSeasonWiseBattleDayGeneratedReportsByPeriodIndexRange(database, clanTag, seasonId, periodIndexStart, periodIndexEnd),
-		])).map(data => data.val());
-		const returnObject = {
-			success: !!startOfDayData && !!unusedDecksReport,
-		};
-		if (isReturnDataAction) {
-			returnObject.startOfDayData = startOfDayData;
-			returnObject.unusedDecksReport = unusedDecksReport;
-		}
-		return returnObject;
-	}
-	catch (error) {
-		console.error(`generate section missed decks report failed, get collection data \n${error}`);
-		return false;
-	}
-};
 
-const createObjectOfAllParticipantsWithTotalDecks = async (startOfDayData, clanTag, seasonId, sectionIndex) => {
+const createObjectOfAllParticipantsWithTotalDecks = (startOfDayData) => {
 	try {
 		if (Object.values(startOfDayData).length == 0) {
 			throw 'unable to find any records in startOfDayData';
 		}
-		const returnObject = {
-			clanTag,
-			seasonId,
-			sectionIndex,
-			participants: {},
-		};
-		Object.values(startOfDayData).forEach(periodData => {
-			periodData?.participants?.forEach(participant => {
-				if (Object.hasOwnProperty.call(returnObject?.participants, participant?.tag?.substring(1))) {
-					if (Object.hasOwnProperty.call(returnObject?.participants[participant?.tag?.substring(1)], 'totalAvailableDecks')) {
-						returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks += 4;
-					}
-					else {
-						returnObject.participants[participant?.tag?.substring(1)].totalAvailableDecks = 4;
-						returnObject.participants[participant?.tag?.substring(1)].name = participant.name;
-						returnObject.participants[participant?.tag?.substring(1)].tag = participant.tag;
-					}
-				}
-				else {
-					returnObject.participants[participant?.tag?.substring(1)] = {
-						name: participant.name,
-						tag: participant.tag,
-						totalAvailableDecks: 4,
-					};
-				}
-			});
-		});
+		const returnObject = startOfDayData.reduce((acc, { player_tag, player_name }) => {
+			const tag = player_tag.substring(1);
+			if (tag in acc) {
+				acc[tag].totalAvailableDecks = (acc[tag].totalAvailableDecks ?? 0) + 4;
+			}
+			else {
+				acc[tag] = {
+					name: player_name,
+					tag: player_tag,
+					totalAvailableDecks: 4,
+				};
+			}
+			return acc;
+		}, {});
 		return returnObject;
 	}
 	catch (error) {
@@ -79,31 +36,16 @@ const createObjectOfAllParticipantsWithTotalDecks = async (startOfDayData, clanT
 	}
 };
 
-const createObjectOfAllParticipantsWithTotalUnusedDecks = async (unusedDecksReport) => {
+const createObjectOfAllParticipantsWithTotalUnusedDecks = (unusedDecksReport) => {
 	try {
 		if (Object.values(unusedDecksReport).length == 0) {
 			throw 'unable to find any records in unusedDecksReport';
 		}
-		const returnObject = {};
-		Object.values(unusedDecksReport).forEach(periodData => {
-			periodData?.unusedDecksReport?.forEach(participant => {
-				if (Object.hasOwnProperty.call(returnObject, participant?.tag?.substring(1))) {
-					if (Object.hasOwnProperty.call(returnObject[participant?.tag?.substring(1)], 'totalUnusedDecks')) {
-						returnObject[participant?.tag?.substring(1)].totalUnusedDecks += participant?.unusedDecks;
-					}
-					else {
-						returnObject[participant?.tag?.substring(1)].totalUnusedDecks = participant?.unusedDecks;
-					}
-				}
-				else {
-					returnObject[participant?.tag?.substring(1)] = {
-						totalUnusedDecks: participant?.unusedDecks,
-						name: participant?.tag,
-						tag: participant?.tag,
-					};
-				}
-			});
-		});
+		const returnObject = unusedDecksReport.reduce((acc, { player_tag, unused_decks }) => {
+			const tag = player_tag.substring(1);
+			acc[tag] = (acc[tag] ?? 0) + unused_decks;
+			return acc;
+		}, {});
 		return returnObject;
 	}
 	catch (error) {
@@ -113,21 +55,22 @@ const createObjectOfAllParticipantsWithTotalUnusedDecks = async (unusedDecksRepo
 };
 
 // generate report
-const generateSectionMissedDeckReport = async (database, clanTag, previousSeasonDetails) => {
+const generateSectionMissedDeckReport = async (clanTag, seasonDetails) => {
 	try {
-		const { seasonId, sectionIndex } = previousSeasonDetails;
-		const collectionData = await getStartAndEndCollectionDataBySectionIndex(database, clanTag, previousSeasonDetails, true);
-		if (!collectionData || !collectionData.success) {
-			throw 'get collection data was not successful';
+		const { seasonId, periodIndex } = seasonDetails;
+		const week = Math.floor(Number(periodIndex) / 7) + 1;
+		// const day = (Number(previousSeasonDetails.periodIndex) + 5) % 7;
+		const { data: astraStartOfDayData } = await getRows('war_reports', 'collected_battle_day_participant_data', [`${clanTag.substring(1)}`, 'start', `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'player_name']);
+		const { data: astraUnusedDecksReport } = await getRows('war_reports', 'period_unused_decks_report', [`${clanTag.substring(1)}`, `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'unused_decks']);
+		if (!astraStartOfDayData?.count || !astraUnusedDecksReport?.count)
+			throw `Collection data / daily reports not avalable. clan: ${clanTag} participantCount:${astraStartOfDayData.count} daily rep recoeds count:${astraUnusedDecksReport.count} season:${seasonId} week:${week}`;
+		const participantList = createObjectOfAllParticipantsWithTotalDecks(astraStartOfDayData.data);
+		const totalSectionUnusedDeckCounts = createObjectOfAllParticipantsWithTotalUnusedDecks(astraUnusedDecksReport.data);
+		if (!participantList || !totalSectionUnusedDeckCounts)
+			throw `Not able to generate participant list / total unused decks object clantag: ${clanTag}`;
+		for (const playerTag in participantList.participants) {
+			participantList.participants[playerTag].unusedDecks = totalSectionUnusedDeckCounts?.[playerTag] ?? 0;
 		}
-		const { startOfDayData, unusedDecksReport } = collectionData;
-		const participantList = await createObjectOfAllParticipantsWithTotalDecks(startOfDayData, clanTag, seasonId, sectionIndex);
-		const consolidatedUnusedDeckReport = await createObjectOfAllParticipantsWithTotalUnusedDecks(unusedDecksReport);
-		if (!participantList || !consolidatedUnusedDeckReport)
-			throw `Not able to generate participant list / consolidated report object clantag: ${clanTag}`;
-		Object.keys(participantList.participants).forEach(playerTag => {
-			participantList.participants[playerTag].unusedDecks = consolidatedUnusedDeckReport?.[playerTag]?.totalUnusedDecks || 0;
-		});
 		return participantList;
 	}
 	catch (error) {
@@ -136,19 +79,9 @@ const generateSectionMissedDeckReport = async (database, clanTag, previousSeason
 	}
 };
 
-// save to DB
-// const saveBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex, unusedDecksReport) => {
-// 	if (unusedDecksReport)
-// 		return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
-// 	else {
-// 		console.error(`generate section missed decks report failed, save to DB clan tag (invalid report value): ${clanTag}`);
-// 		return false;
-// 	}
-// };
-
 const paginateAndSendReport = async (client, clanTag, channelId, previousSeasonDetails, unusedDecksReport) => {
 	const memberList = (await membersDataHelper.getMembers(clanTag))?.data?.items?.map(member => member.tag);
-	const riverRaceReport = Object.values(unusedDecksReport.participants).filter(player => player.unusedDecks > 0);
+	const riverRaceReport = Object.values(unusedDecksReport).filter(player => player.unusedDecks > 0);
 	riverRaceReport.forEach(player => player.isInClan = memberList.includes(player.tag) ? 1 : -1);
 	riverRaceReport.sort((player1, player2) => {
 		if (player2.isInClan == player1.isInClan)
@@ -193,7 +126,7 @@ const sendBattleDayReport = async (client, pageKeys, unusedDecksReport, channelI
 		});
 };
 
-const triggerCurrentRiverRaceReport = async (message, args, database, accessLevel, channelIdByClan) => {
+const triggerCurrentRiverRaceReport = async (message, args, accessLevel, channelIdByClan) => {
 	try {
 		const clanTag = Object.keys(channelIdByClan)?.find(key => channelIdByClan[key] == message.channel.id);
 		if (!clanTag) {
@@ -221,7 +154,7 @@ const triggerCurrentRiverRaceReport = async (message, args, database, accessLeve
 		else {
 			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 		}
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
+		const unusedDecksReport = await generateSectionMissedDeckReport(clanTag, targetSeasonDetails);
 		paginateAndSendReport(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
@@ -231,7 +164,7 @@ const triggerCurrentRiverRaceReport = async (message, args, database, accessLeve
 	}
 };
 
-const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, database, accessLevel, channelIdByClan) => {
+const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, accessLevel, channelIdByClan) => {
 	try {
 		const clanTag = Object.keys(channelIdByClan)?.find(key => channelIdByClan[key] == message.channel.id);
 		if (!clanTag) {
@@ -259,7 +192,7 @@ const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, dat
 		else {
 			targetSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 		}
-		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, targetSeasonDetails);
+		const unusedDecksReport = await generateSectionMissedDeckReport(clanTag, targetSeasonDetails);
 		paginateAndSendPlayerTags(message.client, clanTag, message.channel.id, targetSeasonDetails, unusedDecksReport);
 	}
 	catch (error) {
@@ -270,7 +203,7 @@ const triggerGetPlayerTagsFromCurrentRiverRaceReport = async (message, args, dat
 
 const paginateAndSendPlayerTags = async (client, clanTag, channelId, previousSeasonDetails, unusedDecksReport) => {
 	const memberList = (await membersDataHelper.getMembers(clanTag))?.data?.items?.map(member => member.tag);
-	const riverRaceReport = Object.values(unusedDecksReport.participants).filter(player => player.unusedDecks > 0);
+	const riverRaceReport = Object.values(unusedDecksReport).filter(player => player.unusedDecks > 0);
 	riverRaceReport.forEach(player => player.isInClan = memberList.includes(player.tag) ? 1 : -1);
 	riverRaceReport.sort((player1, player2) => {
 		if (player2.isInClan == player1.isInClan)
@@ -318,6 +251,16 @@ const sendReportPlayerTags = async (client, pageKeys, unusedDecksReport, channel
 			return false;
 		});
 };
+
+// save to DB
+// const saveBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex, unusedDecksReport) => {
+// 	if (unusedDecksReport)
+// 		return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
+// 	else {
+// 		console.error(`generate section missed decks report failed, save to DB clan tag (invalid report value): ${clanTag}`);
+// 		return false;
+// 	}
+// };
 
 // const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds, isSendAction = false) => {
 // 	let isDailyBattleDayReportSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
@@ -386,3 +329,24 @@ module.exports = {
 	triggerCurrentRiverRaceReport,
 	triggerGetPlayerTagsFromCurrentRiverRaceReport,
 };
+
+const { Client } = require('discord.js');
+const { connectRealtimeDatabase } = require('../../database-helpers/database-repository');
+(async () => {
+	const client = new Client({
+		partials: ['MESSAGE', 'REACTION'],
+	});
+	await client.login(process.env.DISCORDJS_BOT_TOKEN);
+	const channelIdByClan = {
+		'#2PYUJUL': '904461174664470628',
+		'#P9QQVJVG': '904472570135457853',
+	};
+	const database = await connectRealtimeDatabase();
+	for (const clanTag of clanListCache) {
+		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
+		const unusedDecksReport = await generateSectionMissedDeckReport(database, clanTag, previousSeasonDetails);
+		// saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
+		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
+		paginateAndSendReport(client, clanTag, channelIdByClan[clanTag], previousSeasonDetails, unusedDecksReport);
+	}
+})();
