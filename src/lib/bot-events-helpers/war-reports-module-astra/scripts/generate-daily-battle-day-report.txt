@@ -1,5 +1,7 @@
 const { Client } = require('discord.js');
 (async () => {
+	const currentDate = new Date();
+	const astraTimestamp = currentDate.toISOString().split('.')[0] + 'Z';
 	const client = new Client({
 		partials: ['MESSAGE', 'REACTION'],
 	});
@@ -11,7 +13,7 @@ const { Client } = require('discord.js');
 	for (const clanTag of clanListCache) {
 		const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
 		const unusedDecksReport = await generateBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
-		saveBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport);
-		sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
+		saveBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport, astraTimestamp);
+		// sendBattleDayReport(client, channleIdByClan[clanTag], unusedDecksReport);
 	}
 })();

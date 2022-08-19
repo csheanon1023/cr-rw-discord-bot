@@ -6,6 +6,7 @@ const { getClient, close } = require('./client');
 const insertRowsJson = async (keyspace, table, rows, validationKeys = null) => {
 	try {
 		const client = await getClient();
+		// TODO sanitize data
 		const insertQueries = rows.reduce((query, row) => {
 			query.push(`INSERT INTO ${keyspace}.${table} JSON '${JSON.stringify(row).replace(/'/g, ' ')}'`);
 			return query;

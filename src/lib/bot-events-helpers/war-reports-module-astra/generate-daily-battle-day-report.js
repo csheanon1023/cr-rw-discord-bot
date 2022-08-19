@@ -1,52 +1,31 @@
-// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module/generate-daily-battle-day-report.js
-const {
-	getCurrentWarBattleDayParticipantDataByPeriodIndex,
-	getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex,
-	setSeasonWiseBattleDayGeneratedReports,
-} = require('../../database-helpers/database-repository');
+// to run script: node -r dotenv/config ./src/lib/bot-events-helpers/war-reports-module-astra/generate-daily-battle-day-report.js
 const { getPreviousSeasonDetailsUptoSpecificBattleDayPeriod } = require('../../utils/warSeasonDetailsUtils');
 const membersDataHelper = require('../../clash-royale-api-helpers/members-data-helper');
 const cron = require('node-cron');
 const { getCurrentTime } = require('../../utils/dateTimeUtils');
 const { MessageEmbed } = require('discord.js');
+const { getRows } = require('../../astra-database-helpers/rest-api-wrapper/getRows');
+const { insertRowsJson } = require('../../astra-database-helpers/cassandra-nodejs-driver/insertRowsJson.js');
 
 const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
 
-// check if it is possible to generate a report
-const getStartAndEndCollectionDataByPeriodIndex = async (database, clanTag, seasonId, periodIndex, isReturnDataAction = true) => {
-	try {
-		const [startOfDayData, endOfDayData] = (await Promise.all([
-			getCurrentWarBattleDayParticipantDataByPeriodIndex(database, clanTag, seasonId, periodIndex),
-			getCurrentWarEndOfBattleDayParticipantDataByPeriodIndex(database, clanTag, seasonId, periodIndex),
-		])).map(data => data.val());
-		const returnObject = {
-			success: startOfDayData && endOfDayData,
-		};
-		if (isReturnDataAction) {
-			returnObject.startOfDayData = startOfDayData;
-			returnObject.endOfDayData = endOfDayData;
-		}
-		return returnObject;
-	}
-	catch (error) {
-		console.error(`generate daily battle day report failed, get collection data \n${error}`);
-		return false;
-	}
-};
-
 // generate report
-const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex) => {
+const generateBattleDayReportByPeriodIndex = async (clanTag, seasonId, periodIndex) => {
 	try {
+		const week = Math.floor(Number(periodIndex) / 7) + 1;
+		const { data: startOfDayData } = await getRows('war_reports', 'collected_battle_day_participant_data', [`${clanTag.substring(1)}`, 'start', `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'player_name', 'decks_used_today', 'decks_used', 'clan_name', 'updated_at']);
+		const { data: endOfDayData } = await getRows('war_reports', 'collected_battle_day_participant_data', [`${clanTag.substring(1)}`, 'end', `${seasonId}`, `${week}`], 2000, null, ['player_tag', 'decks_used', 'updated_at']);
+
 		// TODO some validation because the flow didn't break here
-		const collectionData = await getStartAndEndCollectionDataByPeriodIndex(database, clanTag, seasonId, periodIndex, true);
-		if (!collectionData || !collectionData.success) {
-			throw 'get collection data was not successful';
+		if (!startOfDayData || !endOfDayData || !startOfDayData.data || !endOfDayData.data || startOfDayData.data.length == 0 || endOfDayData.length == 0) {
+			throw 'get start/end collection data was not successful';
 		}
-		const { startOfDayData, endOfDayData } = collectionData;
-		if (startOfDayData.clanTag != endOfDayData.clanTag) {
+
+		if (startOfDayData.data.clanTag != endOfDayData.data.clanTag) {
 			throw 'not able to match clans in both snaps';
 		}
 		// Generate Report
+		// TODO getting clan name is hacky
 		const unusedDecksReport = {
 			seasonDetails: {
 				seasonId: seasonId,
@@ -54,24 +33,27 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 				sectionIndex: Math.floor(periodIndex / 7),
 			},
 			clanTag: clanTag,
+			clanName: startOfDayData?.data?.[0]?.clan_name,
 			unusedDecksReport: [],
 		};
-		startOfDayData.participants.forEach(participant => {
-			const currentParticipantData = endOfDayData.participants.find(player => player.tag == participant.tag);
+		startOfDayData.data.forEach(participant => {
+			const currentParticipantData = endOfDayData.data.find(player => player.player_tag == participant.player_tag);
 			if (currentParticipantData == undefined) {
-				console.error(`generate daily battle day report failed, not able to find player in new river race data: ${participant.tag}`);
+				console.error(`generate daily battle day report failed, not able to find player in new river race data: ${participant.player_tag}`);
 				return;
 			}
-			const unuesdDecks = 4 - (participant.decksUsedToday + currentParticipantData.decksUsed - participant.decksUsed);
+			const unuesdDecks = 4 - (participant.decks_used_today + currentParticipantData.decks_used - participant.decks_used);
 			if (unuesdDecks < 0 || unuesdDecks > 4) {
-				console.log(`generate daily battle day report failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}, player: ${participant.name}, ID: ${participant.tag}`);
+				console.log(`generate daily battle day report failed, something wrong with the calculations, invalid value for unuesdDecks: ${unuesdDecks}, player: ${participant.player_name}, ID: ${participant.player_tag}`);
 				return;
 			}
 			if (unuesdDecks != 0) {
 				const reportPlayerData = {
-					tag: participant.tag,
-					name: participant.name,
+					tag: participant.player_tag,
+					name: participant.player_name,
 					unusedDecks: unuesdDecks,
+					collection_time_start: participant.updated_at,
+					collection_time_end: currentParticipantData.updated_at,
 				};
 				unusedDecksReport.unusedDecksReport.push(reportPlayerData);
 			}
@@ -85,13 +67,33 @@ const generateBattleDayReportByPeriodIndex = async (database, clanTag, seasonId,
 };
 
 // save to DB
-const saveBattleDayReportByPeriodIndex = async (database, clanTag, seasonId, periodIndex, unusedDecksReport) => {
-	if (unusedDecksReport)
-		return setSeasonWiseBattleDayGeneratedReports(clanTag, seasonId, periodIndex, unusedDecksReport, database);
-	else {
+const saveBattleDayReportByPeriodIndex = async (clanTag, seasonId, periodIndex, unusedDecksReport, updated_at) => {
+	// TODO improve check
+	if (!unusedDecksReport) {
 		console.error(`generate daily battle day report failed, save to DB clan tag (invalid report value): ${clanTag}`);
 		return false;
 	}
+
+	const clan_tag = clanTag.substring(1);
+	const clan_name = unusedDecksReport?.clanName ?? 'Default Name';
+	const season = seasonId;
+	const week = Math.floor(Number(periodIndex) / 7) + 1;
+	const day = (Number(periodIndex) + 5) % 7;
+	const validationKeys = {
+		countQueryKeys: [
+			{ column: 'clan_tag', value: clan_tag, type: 'text' },
+			{ column: 'season', value: season, type: 'int' },
+			{ column: 'week', value: week, type: 'int' },
+			{ column: 'day', value: day, type: 'int' },
+		],
+		uniqueKeys: [
+			{ column: 'player_tag', type: 'text' },
+		],
+	};
+	const unusedDecksReportData = unusedDecksReport?.unusedDecksReport
+		?.map(({ tag: player_name, name: player_tag, unusedDecks: unused_decks, collection_time_end, collection_time_start }) => (
+			{ clan_tag, clan_name, season, week, day, player_name, player_tag, unused_decks, updated_at, collection_time_start, collection_time_end }));
+	return await insertRowsJson('war_reports', 'period_unused_decks_report', unusedDecksReportData, validationKeys);
 };
 
 const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
@@ -127,7 +129,7 @@ const sendBattleDayReport = async (client, channelId, unusedDecksReport) => {
 		});
 };
 
-const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, channelIds, isSendAction = false) => {
+const scheduleCronToGenerateDailyMissedBattleDecksReport = (client, channelIds, isSendAction = false) => {
 	let isDailyBattleDayReportSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 	let isDailyBattleDayReportSent = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});
 
@@ -135,6 +137,7 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 	cron.schedule('48 30-35 10 * * 0,1,5,6', async () => {
 		const currentDate = new Date();
 		const formattedCurrentTime = getCurrentTime(currentDate);
+		const astraTimestamp = currentDate.toISOString().split('.')[0] + 'Z';
 
 		if (clanListCache == null || clanListCache.length == 0) {
 			console.log(`${formattedCurrentTime} Skipping river race report generation as clanListCache is empty`);
@@ -152,16 +155,16 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 		try {
 			// Generate Report
 			for (const clanTag of clanListCache) {
-				// TODO check if db has a report already
+				// TODO check if db has a report already, with astra it doesn't matter, it'll be overwritten, writes are idempotent
 				if (isDailyBattleDayReportSaved[clanTag] && isDailyBattleDayReportSent[clanTag]) {
 					console.log(`${formattedCurrentTime} Skipping river race report generation cron, report for ${clanTag} has already been saved and sent`);
 					continue;
 				}
 				const previousSeasonDetails = await getPreviousSeasonDetailsUptoSpecificBattleDayPeriod(clanTag);
-				const unusedDecksReport = await generateBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
+				const unusedDecksReport = await generateBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex);
 				isDailyBattleDayReportSaved[clanTag] ?
 					console.log(`${formattedCurrentTime} Skipping river race report save to DB, report for ${clanTag} has already been saved`) :
-					saveBattleDayReportByPeriodIndex(database, clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport).then(isSaved => {
+					saveBattleDayReportByPeriodIndex(clanTag, previousSeasonDetails.seasonId, previousSeasonDetails.periodIndex, unusedDecksReport, astraTimestamp).then(isSaved => {
 						isDailyBattleDayReportSaved[clanTag] = isSaved;
 					});
 				isDailyBattleDayReportSent[clanTag] || !isSendAction ?
@@ -187,8 +190,4 @@ const scheduleCronToGenerateDailyMissedBattleDecksReport = (database, client, ch
 	});
 };
 
-module.exports = {
-	scheduleCronToGenerateDailyMissedBattleDecksReport,
-	generateBattleDayReportByPeriodIndex,
-	getStartAndEndCollectionDataByPeriodIndex,
-};
+module.exports = { scheduleCronToGenerateDailyMissedBattleDecksReport };
