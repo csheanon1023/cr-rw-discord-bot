@@ -90,7 +90,7 @@ const scheduleCronToCollectEndOfBattleDayParticipantData = () => {
 					};
 
 					const currentParticipantsData = endOfDayRiverRaceData.participants
-						.map(({ tag: player_name, name: player_tag, fame, boatAttacks: boat_attacks, decksUsed: decks_used, decksUsedToday: decks_used_today }) => (
+						.map(({ tag: player_tag, name: player_name, fame, boatAttacks: boat_attacks, decksUsed: decks_used, decksUsedToday: decks_used_today }) => (
 							{ clan_tag, clan_name, season, week, day, player_name, player_tag, collection_type, boat_attacks, decks_used, decks_used_today, fame, updated_at: astraTimestamp }));
 
 					insertRowsJson('war_reports', 'collected_battle_day_participant_data', currentParticipantsData, validationKeys).then((isSaved) => {
