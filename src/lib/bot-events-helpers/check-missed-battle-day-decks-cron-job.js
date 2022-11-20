@@ -6,7 +6,7 @@ const membersDataHelper = require('../clash-royale-api-helpers/members-data-help
 const cron = require('node-cron');
 const { getCurrentTime } = require('../utils/dateTimeUtils');
 
-const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ];
+const clanListCache = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2', '#Q882YVV2' ];
 
 const scheduleCronToCollectRiverRaceData = (database) => {
 	let isRiverRaceDataSnapSaved = clanListCache.reduce((obj, clanTag) => ({ ...obj, [clanTag]: false }), {});

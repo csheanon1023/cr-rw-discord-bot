@@ -19,6 +19,7 @@ const clanCodeByKeyCache = {
 	'QRVUCJVP': 'NOVA',
 	'Q02UV0C0': 'EW',
 	'LUVY2QY2': 'ALPHA',
+	'Q882YVV2': 'ASCENDANTS',
 };
 const embedBannerColours = {
 	COLOUR_ORANGE: '#f56200',
@@ -281,6 +282,7 @@ exports.scrapeAndSendRecords = async (message, args, channelIdByClan, clanTagsBy
 			IN_LOG_CHANNEL_ID_NOVA : channelIdByClan[clanTag],
 			IN_LOG_CHANNEL_ID_EW : channelIdByClan[clanTag],
 			IN_LOG_CHANNEL_ID_ALPHA : channelIdByClan[clanTag],
+			IN_LOG_CHANNEL_ID_ASCENDANTS : channelIdByClan[clanTag],
 		};
 		setTimeout(() => {
 			try {

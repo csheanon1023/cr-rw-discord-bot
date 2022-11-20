@@ -3,7 +3,7 @@ exports.getEnvironmentConfig = (environment) => {
 	case 'production' :
 		return {
 			isSelfRolesEnabled: true,
-			isByLevelCommandEnabled: true,
+			isByLevelCommandEnabled: false,
 			isVerifyDiscordCrLinkEnabled: false,
 			isLegacyInOutLogEnabled: false,
 			isInLogEnabled: true,
@@ -51,7 +51,7 @@ exports.getEnvironmentConfig = (environment) => {
 	case 'dev':
 		return {
 			isSelfRolesEnabled: true,
-			isByLevelCommandEnabled: true,
+			isByLevelCommandEnabled: false,
 			isVerifyDiscordCrLinkEnabled: true,
 			isLegacyInOutLogEnabled: true,
 			isInLogEnabled: true,

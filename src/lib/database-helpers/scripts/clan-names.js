@@ -49,6 +49,6 @@ const resetClanList = async (database, clanTags) => {
 */
 
 // SECTION export
-exports.initializeClanNames = (database, currentClans = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2' ]) => {
+exports.initializeClanNames = (database, currentClans = [ '#2PYUJUL', '#P9QQVJVG', '#QRVUCJVP', '#Q02UV0C0', '#LUVY2QY2', '#Q882YVV2' ]) => {
 	resetClanList(database, currentClans);
 };
