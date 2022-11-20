@@ -38,10 +38,10 @@ jobs:
         run: ibmcloud target --cf
         shell: bash
       - name: Deploy to Cloud Foundry (Staging)
-        if: github.ref == 'refs/heads/staging'
+        # if: github.ref == 'refs/heads/staging'
         run: ibmcloud cf push cr-bot-staging -u process --no-manifest --no-route -m 128M -k 512M
         shell: bash
       - name: Deploy to Cloud Foundry (Production)
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         run: ibmcloud cf push cr-bot-prod -u process --no-manifest --no-route -m 128M
         shell: bash
